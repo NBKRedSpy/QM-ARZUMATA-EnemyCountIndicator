@@ -1,0 +1,8 @@
+{
+  "UniqueModName": "ARZUMATA_EnemyCountIndicator",
+  "Assemblies": [
+      "QM_EnemyCountIndicator.dll"
+  ],
+  "Dependencies": [],
+  "SteamTags": []
+}
