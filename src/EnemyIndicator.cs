@@ -305,6 +305,11 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
             foreach (Creature creature in creatures)
             {
+                if (creature.IsAlly(player))
+                {
+                    continue;
+                }
+
                 var monster = (Monster)creature;
                 MapCell cell = monster._mapGrid.GetCell(monster.CreatureData.Position, false);
 
