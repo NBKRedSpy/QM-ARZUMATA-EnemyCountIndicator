@@ -12,23 +12,25 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 {
     internal class EnemyIndicator
     {
-        private static bool debugLog = true;
+        private static bool debugLog = false;
         private static Transform enemyIndicatorInstance = null;
         private static int monsterCount = 0;
         private static int monsterCurrent = 0;
         private static bool cameraMoveDo = false;
         private static bool cameraMoveBackToPlayer = false;
         private static Player player;
+        private static Locale locale = new Locale();
         private static List<Creature> monsters = new List<Creature>();
         private static CameraMover cameraMover = new CameraMover();
         private static TextMeshProUGUI indicatorTextComponentTextMesh;
         private static TextMeshProUGUI indicatorCounterTextComponentTextMesh;
         private static Image indicatorCounterBackgroundImage;
         private static Image indicatorContainerBorderImage;
-        
         private static Color IndicatorCounterBackgroundColorDefault;
         private static Color IndicatorTextColorDefault;
         private static RectTransform enemyIndicatorRectTransform;
+        private static Localization.Lang lang = Localization.Lang.EnglishUS;
+        private static bool languageChanged = false;
 
         // Number of times to increase/decrease brightness before reversing direction.
         private static int brightnessStepCount = 5;
@@ -38,7 +40,26 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         private static float currentStepTime = 0f;
 
         // How many times per second the color changes (in this case, 35 times per sec).
-        private static float stepDuration = 1f / 35f; 
+        private static float stepDuration = 1f / 35f;
+
+        // That way we can determine current game language.
+        [HarmonyPatch(typeof(Localization), "ActualizeFontAndSize", new Type[] {
+            typeof(TextMeshProUGUI), 
+            typeof(Localization.Lang),
+            typeof(TextContext),
+        })]
+        public static class Localization_ActualizeFontAndSize_Patch
+        {
+            [HarmonyPostfix]
+            public static void Postfix(TextMeshProUGUI text, Localization.Lang forceLang, TextContext context)
+            {
+                if (lang != forceLang)
+                {
+                    languageChanged = true;
+                    lang = forceLang;
+                }
+            }
+        }
 
         [Hook(ModHookType.DungeonStarted)]
         public static void EnemyCountIndicatorButton(IModContext context)
@@ -143,7 +164,9 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             if (indicatorTextComponentTextMesh == null)
             {
                 indicatorTextComponentTextMesh = indicatorText.GetComponent<TextMeshProUGUI>();
-                indicatorTextComponentTextMesh.text = "ENEMIES";
+                // indicatorTextComponentTextMesh.text = "ENEMIES";
+                indicatorTextComponentTextMesh.text = locale.GetString("enemy.indicator.lang", lang);
+
                 IndicatorTextColorDefault = indicatorTextComponentTextMesh.color; // Just making sure we keep original color.
                 indicatorTextComponentTextMesh.color = Plugin.Config.IndicatorTextColor;
             }
@@ -332,89 +355,105 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         {
             // Constant dungeon loop update called every frame
             HandleCameraMove(context);
+            HandleLanguageChange();
 
             if (monsterCount > 0)
             {
                 // Show the enemy indicator
-                enemyIndicatorInstance.gameObject.SetActive(true); 
+                enemyIndicatorInstance.gameObject.SetActive(true);
                 indicatorCounterTextComponentTextMesh.text = monsterCount.ToString();
-
-                if (isIncreasingBrightness)
-                {
-                    if (currentStepIndex >= brightnessStepCount)
-                    {
-                        // Reached maximum brightness, start decreasing
-                        isIncreasingBrightness = false;
-                    }
-                    else
-                    {
-                        currentStepTime += Time.deltaTime;
-
-                        if (currentStepTime >= stepDuration)
-                        {
-                            // Adjust this factor to control the amount of increase
-                            float brightnessIncreaseFactor = 1.2f; 
-                            Color brighterColor = new Color(
-                            Mathf.Clamp(indicatorCounterBackgroundImage.color.r * brightnessIncreaseFactor, 0, 1),
-                            Mathf.Clamp(indicatorCounterBackgroundImage.color.g * brightnessIncreaseFactor, 0, 1),
-                            Mathf.Clamp(indicatorCounterBackgroundImage.color.b * brightnessIncreaseFactor, 0, 1),
-                            indicatorCounterBackgroundImage.color.a
-                            );
-
-                            // Apply the brighter color to the material.
-                            indicatorCounterBackgroundImage.color = brighterColor;
-                            currentStepIndex++;
-                            currentStepTime = 0f; // Reset time for next step
-                        }
-                    
-                    }
-                }
-                else
-                {
-                    if (currentStepIndex <= -brightnessStepCount)
-                    {
-                        // Reached minimum brightness, start increasing again
-                        isIncreasingBrightness = true;
-                    }
-                    else
-                    {
-                        currentStepTime += Time.deltaTime;
-                        if (currentStepTime >= stepDuration)
-                        {
-                            // Adjust this factor to control the amount of decrease
-                            float brightnessDecreaseFactor = 1f / 1.2f;
-                            Color dimmerColor = new Color(
-                                Mathf.Clamp(indicatorCounterBackgroundImage.color.r * brightnessDecreaseFactor, 0, 1),
-                                Mathf.Clamp(indicatorCounterBackgroundImage.color.g * brightnessDecreaseFactor, 0, 1),
-                                Mathf.Clamp(indicatorCounterBackgroundImage.color.b * brightnessDecreaseFactor, 0, 1),
-                                indicatorCounterBackgroundImage.color.a
-                            );
-
-                            // Apply the dimmer color to the material.
-                            indicatorCounterBackgroundImage.color = dimmerColor;
-                            currentStepIndex--;
-
-                            // Reset time for next step
-                            currentStepTime = 0f; 
-                        }
-                        
-                    }
-                }
-
-                if (isIncreasingBrightness)
-                {
-                    currentStepIndex++;
-                }
-                else
-                {
-                    currentStepIndex--;
-                }
+                ProcessBrightness();
             }
             else
             {
                 // Hide the enemy indicator
                 enemyIndicatorInstance.gameObject.SetActive(false);
                 indicatorCounterTextComponentTextMesh.text = "0";
+            }
+        }
+
+        private static void HandleLanguageChange()
+        {
+            if (languageChanged)
+            {
+                if (indicatorTextComponentTextMesh != null)
+                {
+                    indicatorTextComponentTextMesh.text = locale.GetString("enemy.indicator.lang", lang);
+                }
+            }
+        }
+
+        private static void ProcessBrightness()
+        {
+            if (isIncreasingBrightness)
+            {
+                if (currentStepIndex >= brightnessStepCount)
+                {
+                    // Reached maximum brightness, start decreasing
+                    isIncreasingBrightness = false;
+                }
+                else
+                {
+                    currentStepTime += Time.deltaTime;
+
+                    if (currentStepTime >= stepDuration)
+                    {
+                        // Adjust this factor to control the amount of increase
+                        float brightnessIncreaseFactor = 1.2f;
+                        Color brighterColor = new Color(
+                        Mathf.Clamp(indicatorCounterBackgroundImage.color.r * brightnessIncreaseFactor, 0, 1),
+                        Mathf.Clamp(indicatorCounterBackgroundImage.color.g * brightnessIncreaseFactor, 0, 1),
+                        Mathf.Clamp(indicatorCounterBackgroundImage.color.b * brightnessIncreaseFactor, 0, 1),
+                        indicatorCounterBackgroundImage.color.a
+                        );
+
+                        // Apply the brighter color to the material.
+                        indicatorCounterBackgroundImage.color = brighterColor;
+                        currentStepIndex++;
+                        currentStepTime = 0f; // Reset time for next step
+                    }
+
+                }
+            }
+            else
+            {
+                if (currentStepIndex <= -brightnessStepCount)
+                {
+                    // Reached minimum brightness, start increasing again
+                    isIncreasingBrightness = true;
+                }
+                else
+                {
+                    currentStepTime += Time.deltaTime;
+                    if (currentStepTime >= stepDuration)
+                    {
+                        // Adjust this factor to control the amount of decrease
+                        float brightnessDecreaseFactor = 1f / 1.2f;
+                        Color dimmerColor = new Color(
+                            Mathf.Clamp(indicatorCounterBackgroundImage.color.r * brightnessDecreaseFactor, 0, 1),
+                            Mathf.Clamp(indicatorCounterBackgroundImage.color.g * brightnessDecreaseFactor, 0, 1),
+                            Mathf.Clamp(indicatorCounterBackgroundImage.color.b * brightnessDecreaseFactor, 0, 1),
+                            indicatorCounterBackgroundImage.color.a
+                        );
+
+                        // Apply the dimmer color to the material.
+                        indicatorCounterBackgroundImage.color = dimmerColor;
+                        currentStepIndex--;
+
+                        // Reset time for next step
+                        currentStepTime = 0f;
+                    }
+
+                }
+            }
+
+            if (isIncreasingBrightness)
+            {
+                currentStepIndex++;
+            }
+            else
+            {
+                currentStepIndex--;
             }
         }
     }
