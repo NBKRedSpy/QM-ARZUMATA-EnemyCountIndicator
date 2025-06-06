@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace QM_ARZUMATA_EnemyCountIndicator
 {
@@ -98,6 +99,11 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 enemyIndicatorInstance.transform.localPosition = new Vector3(0, coordinateOffset.localPosition.y + coordinateOffset.sizeDelta.y + 2, 0);
             }
 
+            // ListComponentsRecursive(enemyIndicatorInstance.gameObject);
+
+            // Disable the QMorphosStatePanel component. We don't need it.
+            enemyIndicatorInstance.GetComponent<QMorphosStatePanel>().enabled = false;
+            
             enemyIndicatorInstance.name = "EnemyIndicator";
 
             // Adjust text of enemy indicator.
@@ -124,6 +130,15 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             {
                 indicatorCounterTextComponentTextMesh = imageindicatorCounterText.GetComponent<TextMeshProUGUI>();
                 indicatorCounterTextComponentTextMesh.text = "0";
+            }
+        }
+
+        static void ListComponentsRecursive(GameObject obj) {
+            foreach (Component component in obj.GetComponents<Component>()) {
+                Debug.Log(component.GetType().Name);
+            }
+            foreach (Transform child in obj.transform) {
+                ListComponentsRecursive(child.gameObject);
             }
         }
 
