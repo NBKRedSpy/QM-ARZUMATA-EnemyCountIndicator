@@ -109,6 +109,8 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             indicatorContainerBorderImage = indicatorContainerBorder.GetComponent<Image>();
             indicatorCounterBackgroundImage = imageindicatorCounterBackground.GetComponent<Image>();
 
+            AdjustIndicatorBorderHue(indicatorContainerBorderImage, IndicatorCounterBackgroundDefault, Plugin.Config.IndicatorBackgroundColor);
+
             IndicatorCounterBackgroundDefault = indicatorCounterBackgroundImage.color; // Just making sure we keep original color.
             indicatorCounterBackgroundImage.color = Plugin.Config.IndicatorBackgroundColor;
 
@@ -163,6 +165,15 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         //         Plugin.Logger.Log("ChangeDirection(CellPosition) completed with result: " + __result);
         //     }
         // }
+
+       public static void AdjustIndicatorBorderHue(Image image, Color sourceColor, Color targetColor)
+        {
+            if (image != null && image.sprite != null)
+            {
+                // Adjust sprite hue with pixel-perfect rendering
+                image.sprite = SpriteHueAdjuster.AdjustSpriteHue(image.sprite,sourceColor,targetColor);
+            }
+        }
 
         [HarmonyPatch(typeof(VisibilitySystem), "UpdateVisibility", new Type[] { typeof(ItemsOnFloor), typeof(Creatures), typeof(MapObstacles), typeof(MapRenderer), typeof(MapGrid), typeof(MapEntities), typeof(FireController), typeof(Visibilities) })]
         public static class UpdateVisibility_Patch
