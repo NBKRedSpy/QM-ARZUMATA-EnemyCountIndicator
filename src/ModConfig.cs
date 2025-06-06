@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,6 +15,8 @@ namespace QM_EnemyCountIndicator
 {
     public class ModConfig
     {
+        // Thanks Crynano
+
         // MCM Related Start
         [JsonIgnore]
         public Color IndicatorBackgroundColor { get; set; }
@@ -32,6 +34,9 @@ namespace QM_EnemyCountIndicator
 
         [JsonIgnore]
         public bool PositionUpperRight { get; set; } = false;
+
+        [JsonIgnore]
+        public float CameraMoveSpeed { get; set; } = 10f;
 
         [JsonIgnore]
         public float BlinkIntensity { get; set; } = 35f;

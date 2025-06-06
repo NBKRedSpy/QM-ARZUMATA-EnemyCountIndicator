@@ -295,7 +295,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             {
                 if (cameraMoveBackToPlayer)
                 {
-                    cameraMover.MoveCameraNextMonster((Creature)player, context.State);
+                    cameraMover.MoveCameraNextMonster((Creature)player, context.State, Plugin.Config.CameraMoveSpeed);
                     cameraMoveDo = false;
                     cameraMoveBackToPlayer = false;
                     return;
@@ -303,7 +303,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
                 if (monsters.Count != 0)
                 {
-                    cameraMover.MoveCameraNextMonster(monsters[monsterCurrent], context.State);
+                    cameraMover.MoveCameraNextMonster(monsters[monsterCurrent], context.State, Plugin.Config.CameraMoveSpeed);
                     cameraMoveDo = false;
                     monsterCurrent++;
 
