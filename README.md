@@ -38,3 +38,9 @@ Thanks to NBK_RedSpy, Crynano and all the people who make their code open source
 # Change Log
 ## 1.0 (9a50fd0)
 * Initial release
+
+## 1.0.1 (7fb8149)
+* Fix: Indicator bugging out on floor change.
+* Add: Enable / Disable indicator blinking.
+* Add: Add option to show all enemies on map in the counter.
+* Add: Add option to auto hide indicator or keep it always on screen.

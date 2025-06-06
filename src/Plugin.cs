@@ -40,7 +40,7 @@ namespace QM_EnemyCountIndicator
             StreamReader reader = new StreamReader(stream);
 
             // Check MD5 of config.ini to determine if we need to replace with with new version.
-            var existingMD5 = File.Exists(ConfigDirectories.ConfigPath) ? Helpers.GetMd5HashFromFilePath(ConfigDirectories.ConfigPath) : null;
+            var existingMD5 = File.Exists(ConfigPath) ? Helpers.GetMd5HashFromFilePath(ConfigPath) : null;
             var newMD5 = Helpers.GetMd5HashFromStream(stream);
             stream.Seek(0, SeekOrigin.Begin);
 
