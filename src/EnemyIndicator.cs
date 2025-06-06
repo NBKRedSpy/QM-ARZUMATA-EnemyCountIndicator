@@ -161,21 +161,16 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             IndicatorCounterBackgroundColorDefault = indicatorCounterBackgroundImage.color; // Just making sure we keep original color.
             indicatorCounterBackgroundImage.color = Plugin.Config.IndicatorBackgroundColor;
 
-            if (indicatorTextComponentTextMesh == null)
-            {
-                indicatorTextComponentTextMesh = indicatorText.GetComponent<TextMeshProUGUI>();
-                // indicatorTextComponentTextMesh.text = "ENEMIES";
-                indicatorTextComponentTextMesh.text = locale.GetString("enemy.indicator.lang", lang);
+            // On floor change, TextMesh component is updated with new id. We do that too now.
+            indicatorTextComponentTextMesh = indicatorText.GetComponent<TextMeshProUGUI>();
+            // indicatorTextComponentTextMesh.text = "ENEMIES";
+            indicatorTextComponentTextMesh.text = locale.GetString("enemy.indicator.lang", lang);
 
-                IndicatorTextColorDefault = indicatorTextComponentTextMesh.color; // Just making sure we keep original color.
-                indicatorTextComponentTextMesh.color = Plugin.Config.IndicatorTextColor;
-            }
+            IndicatorTextColorDefault = indicatorTextComponentTextMesh.color; // Just making sure we keep original color.
+            indicatorTextComponentTextMesh.color = Plugin.Config.IndicatorTextColor;
 
-            if (indicatorCounterTextComponentTextMesh == null)
-            {
-                indicatorCounterTextComponentTextMesh = imageindicatorCounterText.GetComponent<TextMeshProUGUI>();
-                indicatorCounterTextComponentTextMesh.text = "0";
-            }
+            indicatorCounterTextComponentTextMesh = imageindicatorCounterText.GetComponent<TextMeshProUGUI>();
+            indicatorCounterTextComponentTextMesh.text = "0";
         }
 
         private static void SetupEventTriggers()
