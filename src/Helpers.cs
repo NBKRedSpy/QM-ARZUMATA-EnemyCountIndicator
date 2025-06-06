@@ -21,7 +21,7 @@ internal static class Helpers
         // Check the length of the input string to determine if it has an alpha channel
         if (hex.Length == 7)  // No alpha channel provided, assume full opacity
         {
-            hex = "#FF" + hex.Substring(0);
+            hex = "#" + hex.Substring(1) + "FF";
         }
         else if (hex.Length != 9)
         {

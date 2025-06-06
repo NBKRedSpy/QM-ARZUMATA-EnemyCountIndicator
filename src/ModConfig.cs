@@ -15,9 +15,11 @@ namespace QM_EnemyCountIndicator
 {
     public class ModConfig
     {
+        // Thanks Crynano
+
         // MCM Related Start
         [JsonIgnore]
-        public Color IndicatorBackgroundColor { get; set; }
+        public Color IndicatorBackgroundColor { get; set; } = Helpers.HexStringToUnityColor("#4B1416");
 
         // Default color, but we update it in code just in case.
         //[JsonIgnore]
@@ -32,6 +34,9 @@ namespace QM_EnemyCountIndicator
 
         [JsonIgnore]
         public bool PositionUpperRight { get; set; } = false;
+
+        [JsonIgnore]
+        public float CameraMoveSpeed { get; set; } = 10f;
 
         [JsonIgnore]
         public float BlinkIntensity { get; set; } = 35f;

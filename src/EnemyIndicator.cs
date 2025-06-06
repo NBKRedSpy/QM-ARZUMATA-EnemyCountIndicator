@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using MGSC;
 using QM_EnemyCountIndicator;
 using System;
@@ -6,27 +6,60 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 namespace QM_ARZUMATA_EnemyCountIndicator
 {
     internal class EnemyIndicator
     {
-        public static bool debugLog = true;
-        public static Transform enemyIndicatorInstance = null;
-        public static int monsterCount = 0;
+        private static bool debugLog = false;
+        private static Transform enemyIndicatorInstance = null;
+        private static int monsterCount = 0;
+        private static int monsterCurrent = 0;
+        private static bool cameraMoveDo = false;
+        private static bool cameraMoveBackToPlayer = false;
+        private static Player player;
+        private static Locale locale = new Locale();
+        private static List<Creature> monsters = new List<Creature>();
+        private static CameraMover cameraMover = new CameraMover();
+        private static TextMeshProUGUI indicatorTextComponentTextMesh;
+        private static TextMeshProUGUI indicatorCounterTextComponentTextMesh;
+        private static Image indicatorCounterBackgroundImage;
+        private static Image indicatorContainerBorderImage;
+        private static Color IndicatorCounterBackgroundColorDefault;
+        private static Color IndicatorTextColorDefault;
+        private static RectTransform enemyIndicatorRectTransform;
+        private static Localization.Lang lang = Localization.Lang.EnglishUS;
+        private static bool languageChanged = false;
 
-        public static TextMeshProUGUI textmeshComponentStage;
-        public static TextMeshProUGUI textmeshComponentCurrent;
-        public static Image imageComponentImage;
-
-        public static Color ComponentStageColorDefault;
         // Number of times to increase/decrease brightness before reversing direction.
         private static int brightnessStepCount = 5;
 
         private static bool isIncreasingBrightness = true;
         private static int currentStepIndex = 0;
         private static float currentStepTime = 0f;
-        private static float stepDuration = 1f / 35f; // How many times per second the color changes (in this case, 35 times per sec)
+
+        // How many times per second the color changes (in this case, 35 times per sec).
+        private static float stepDuration = 1f / 35f;
+
+        // That way we can determine current game language.
+        [HarmonyPatch(typeof(Localization), "ActualizeFontAndSize", new Type[] {
+            typeof(TextMeshProUGUI), 
+            typeof(Localization.Lang),
+            typeof(TextContext),
+        })]
+        public static class Localization_ActualizeFontAndSize_Patch
+        {
+            [HarmonyPostfix]
+            public static void Postfix(TextMeshProUGUI text, Localization.Lang forceLang, TextContext context)
+            {
+                if (lang != forceLang)
+                {
+                    languageChanged = true;
+                    lang = forceLang;
+                }
+            }
+        }
 
         [Hook(ModHookType.DungeonStarted)]
         public static void EnemyCountIndicatorButton(IModContext context)
@@ -36,20 +69,14 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             // Find DungeonHudScreen
             var dungeonHud = GameObject.FindObjectOfType<DungeonHudScreen>(true);
 
-            // UpperRight Part
-
             // Find the UpperRight panel in the hierarchy
             var upperRight = dungeonHud.transform.Find("UpperRight");
 
             // We need this for coordinates offset
             var mapButton = upperRight.transform.Find("MapButton");
 
-
-            // Lower Right Part
-
             // Find the LowerRight panel in the hierarchy
             var lowerRight = dungeonHud.transform.Find("LowerRight");
-
 
             // Find the QmorphosState prefab
             var qmorphosStatePrefab = lowerRight.transform.Find("QmorphosState"); 
@@ -62,7 +89,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
              * QmorphosState Pos:   Vector3(0,   15, 0);
              * QmorphosState Size:  Vector3(101, 21, 0);
              * Each time its +2 px space
-             * */
+            */
 
             var offsetPx = 2;
 
@@ -71,7 +98,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
                 // Instantiate the QmorphosState prefab under the UpperPanel as enemyIndicatorInstance
                 enemyIndicatorInstance = GameObject.Instantiate(qmorphosStatePrefab, upperRight);
-                var enemyIndicatorRect = enemyIndicatorInstance.GetComponent<RectTransform>();
+                enemyIndicatorRectTransform  = enemyIndicatorInstance.GetComponent<RectTransform>();
 
                 // Get the size (width and height) of qmorphosStatePrefab using RectTransform
                 var coordinateOffset = mapButton.GetComponent<RectTransform>();
@@ -85,9 +112,8 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                     coordinateOffset.sizeDelta.y - 
                     coordinateOffsetHintLabel.sizeDelta.y -
                     offsetPx -
-                    enemyIndicatorRect.sizeDelta.y, 
+                    enemyIndicatorRectTransform .sizeDelta.y, 
                     0);
-
             }
             else
             {
@@ -101,38 +127,108 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 enemyIndicatorInstance.transform.localPosition = new Vector3(0, coordinateOffset.localPosition.y + coordinateOffset.sizeDelta.y + 2, 0);
             }
 
+            // ListComponentsRecursive(enemyIndicatorInstance.gameObject);
+
+            // Disable the QMorphosStatePanel component. We don't need it.
+            enemyIndicatorInstance.GetComponent<QMorphosStatePanel>().enabled = false;
+            
             enemyIndicatorInstance.name = "EnemyIndicator";
+            SetupEventTriggers();
+
+            // Add an onClick event listener
+            // Button button = enemyIndicatorInstance.gameObject.AddComponent<Button>();
+            // button.onClick.AddListener((PointerEventData data) => OnEnemyIndicatorClick(data.button));
 
             // Adjust text of enemy indicator.
-            var indicatorPanelSprite = enemyIndicatorInstance.GetChild(0);
-            var indicatorTextStage = indicatorPanelSprite.GetChild(0);
-            var imageindicatorImage = indicatorPanelSprite.GetChild(1);
-            var imageindicatorImageText = imageindicatorImage.GetChild(0);
+            /* Unity hierarchy for qmorphosStatePrefab
+             * QmorphosState
+             *  - QmorphosStagePanel
+             *     - Stage
+             *     - Image
+             *        - CurrentQMorphos
+             */
 
-            imageComponentImage = imageindicatorImage.GetComponent<Image>();
-            ComponentStageColorDefault = imageComponentImage.color; // Just making sure we keep original color.
-            imageComponentImage.color = Plugin.Config.IndicatorBackgroundColor;
+            var indicatorContainerBorder = enemyIndicatorInstance.GetChild(0); // QmorphosStagePanel
+            var indicatorText = indicatorContainerBorder.GetChild(0); // Stage
+            var imageindicatorCounterBackground = indicatorContainerBorder.GetChild(1); // Image
+            var imageindicatorCounterText = imageindicatorCounterBackground.GetChild(0); // CurrentQMorphos
 
-            if (debugLog)
+            indicatorContainerBorderImage = indicatorContainerBorder.GetComponent<Image>();
+            indicatorCounterBackgroundImage = imageindicatorCounterBackground.GetComponent<Image>();
+
+            AdjustIndicatorBorderHue(indicatorContainerBorderImage, IndicatorCounterBackgroundColorDefault, Plugin.Config.IndicatorBackgroundColor);
+
+            IndicatorCounterBackgroundColorDefault = indicatorCounterBackgroundImage.color; // Just making sure we keep original color.
+            indicatorCounterBackgroundImage.color = Plugin.Config.IndicatorBackgroundColor;
+
+            if (indicatorTextComponentTextMesh == null)
             {
+                indicatorTextComponentTextMesh = indicatorText.GetComponent<TextMeshProUGUI>();
+                // indicatorTextComponentTextMesh.text = "ENEMIES";
+                indicatorTextComponentTextMesh.text = locale.GetString("enemy.indicator.lang", lang);
 
-                // Iterate through each component on this child
-                foreach (Component comp in imageindicatorImage.GetComponents(typeof(Component)))
+                IndicatorTextColorDefault = indicatorTextComponentTextMesh.color; // Just making sure we keep original color.
+                indicatorTextComponentTextMesh.color = Plugin.Config.IndicatorTextColor;
+            }
+
+            if (indicatorCounterTextComponentTextMesh == null)
+            {
+                indicatorCounterTextComponentTextMesh = imageindicatorCounterText.GetComponent<TextMeshProUGUI>();
+                indicatorCounterTextComponentTextMesh.text = "0";
+            }
+        }
+
+        private static void SetupEventTriggers()
+        {
+            EventTrigger eventTrigger = enemyIndicatorInstance.gameObject.AddComponent<EventTrigger>();
+
+            PointerEventData.InputButton[] buttons = { 
+                PointerEventData.InputButton.Left, 
+                PointerEventData.InputButton.Right, 
+                //PointerEventData.InputButton.Middle 
+            };
+
+            foreach (var button in buttons)
+            {
+                EventTrigger.Entry entry = new EventTrigger.Entry();
+                entry.eventID = EventTriggerType.PointerClick;
+                entry.callback.AddListener((eventData) =>
                 {
-                    Plugin.Logger.Log($"\tComponent: {comp.GetType().Name}");
-                }
+                    PointerEventData pointerEventData = eventData as PointerEventData;
+                    if (pointerEventData.button == button)
+                    {
+                        OnEnemyIndicatorClick(button);
+                    }
+                });
+                eventTrigger.triggers.Add(entry);
             }
+        }
 
-            if (textmeshComponentStage == null)
+        private static void OnEnemyIndicatorClick(PointerEventData.InputButton button)
+        {
+            switch (button)
             {
-                textmeshComponentStage = indicatorTextStage.GetComponent<TextMeshProUGUI>();
-                textmeshComponentStage.text = "ENEMIES";
+                case PointerEventData.InputButton.Left:
+                    cameraMoveDo = true;
+                    break;
+                case PointerEventData.InputButton.Right:
+                    cameraMoveDo = true;
+                    cameraMoveBackToPlayer = true;
+                    break;
+                //case PointerEventData.InputButton.Middle:
+                //    Plugin.Logger.Log("middle mouse click");
+                //    break;
             }
+        }
 
-            if (textmeshComponentCurrent == null)
+        private static void ListComponentsRecursive(GameObject obj) {
+            foreach (Component component in obj.GetComponents<Component>())
             {
-                textmeshComponentCurrent = imageindicatorImageText.GetComponent<TextMeshProUGUI>();
-                textmeshComponentCurrent.text = "0";
+                Debug.Log(component.GetType().Name);
+            }
+            foreach (Transform child in obj.transform)
+            {
+                ListComponentsRecursive(child.gameObject);
             }
         }
 
@@ -175,6 +271,15 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         //     }
         // }
 
+        private static void AdjustIndicatorBorderHue(Image image, Color sourceColor, Color targetColor)
+        {
+            if (image != null && image.sprite != null)
+            {
+                // Adjust sprite hue with pixel-perfect rendering
+                image.sprite = SpriteHueAdjuster.AdjustSpriteHue(image.sprite,sourceColor,targetColor);
+            }
+        }
+
         [HarmonyPatch(typeof(VisibilitySystem), "UpdateVisibility", new Type[] { typeof(ItemsOnFloor), typeof(Creatures), typeof(MapObstacles), typeof(MapRenderer), typeof(MapGrid), typeof(MapEntities), typeof(FireController), typeof(Visibilities) })]
         public static class UpdateVisibility_Patch
         {
@@ -182,6 +287,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             public static void Postfix(ref ItemsOnFloor itemsOnFloor, ref Creatures creatures, ref MapObstacles mapObstacles, ref MapRenderer mapRenderer, ref MapGrid mapGrid, ref MapEntities mapEntities, ref FireController fireController, ref Visibilities visibilities)
             {
                 monsterCount = CountSeenMonsters(creatures.Monsters);
+                player = creatures.Player;
             }
         }
 
@@ -193,12 +299,15 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             public static void Postfix(Creatures creatures, MapGrid mapGrid, ref bool __result)
             {
                 monsterCount = CountSeenMonsters(creatures.Monsters);
+                player = creatures.Player;
             }
         }
 
         private static int CountSeenMonsters(List<Creature> creatures)
         {
             int monsterCount = 0;
+            monsters.Clear();
+
             foreach (Creature creature in creatures)
             {
                 var monster = (Monster)creature;
@@ -207,96 +316,144 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 if (cell.isSeen)
                 {
                     monsterCount++;
+                    monsters.Add(creature);
                 }
             }
 
             return monsterCount;
         }
 
+        private static void HandleCameraMove(IModContext context)
+        {
+            if (cameraMoveDo)
+            {
+                if (cameraMoveBackToPlayer)
+                {
+                    cameraMover.MoveCameraNextMonster((Creature)player, context.State, Plugin.Config.CameraMoveSpeed);
+                    cameraMoveDo = false;
+                    cameraMoveBackToPlayer = false;
+                    return;
+                }
+
+                if (monsters.Count != 0)
+                {
+                    cameraMover.MoveCameraNextMonster(monsters[monsterCurrent], context.State, Plugin.Config.CameraMoveSpeed);
+                    cameraMoveDo = false;
+                    monsterCurrent++;
+
+                    if (monsterCurrent >= monsters.Count)
+                    {
+                        monsterCurrent = 0;
+                    }
+                    return;
+                }
+            }
+        }
 
         [Hook(ModHookType.DungeonUpdateBeforeGameLoop)]
         public static void DungeonUpdateBeforeGameLoop(IModContext context)
         {
             // Constant dungeon loop update called every frame
+            HandleCameraMove(context);
+            HandleLanguageChange();
+
             if (monsterCount > 0)
             {
-                enemyIndicatorInstance.gameObject.SetActive(true); // Hide the enemy indicator
-                textmeshComponentCurrent.text = monsterCount.ToString();
-
-                if (isIncreasingBrightness)
-                {
-                    if (currentStepIndex >= brightnessStepCount)
-                    {
-                        // Reached maximum brightness, start decreasing
-                        isIncreasingBrightness = false;
-                    }
-                    else
-                    {
-                        currentStepTime += Time.deltaTime;
-
-                        if (currentStepTime >= stepDuration)
-                        {
-                            float brightnessIncreaseFactor = 1.2f; // Adjust this factor to control the amount of increase
-                            Color brighterColor = new Color(
-                            Mathf.Clamp(imageComponentImage.color.r * brightnessIncreaseFactor, 0, 1),
-                            Mathf.Clamp(imageComponentImage.color.g * brightnessIncreaseFactor, 0, 1),
-                            Mathf.Clamp(imageComponentImage.color.b * brightnessIncreaseFactor, 0, 1),
-                            imageComponentImage.color.a
-                            );
-
-                            // Apply the brighter color to the material.
-                            imageComponentImage.color = brighterColor;
-                            currentStepIndex++;
-                            currentStepTime = 0f; // Reset time for next step
-                        }
-                    
-                    }
-                }
-                else
-                {
-                    if (currentStepIndex <= -brightnessStepCount)
-                    {
-                        // Reached minimum brightness, start increasing again
-                        isIncreasingBrightness = true;
-                    }
-                    else
-                    {
-                        currentStepTime += Time.deltaTime;
-                        if (currentStepTime >= stepDuration)
-                        {
-                            float brightnessDecreaseFactor = 1f / 1.2f; // Adjust this factor to control the amount of decrease
-                            Color dimmerColor = new Color(
-                                Mathf.Clamp(imageComponentImage.color.r * brightnessDecreaseFactor, 0, 1),
-                                Mathf.Clamp(imageComponentImage.color.g * brightnessDecreaseFactor, 0, 1),
-                                Mathf.Clamp(imageComponentImage.color.b * brightnessDecreaseFactor, 0, 1),
-                                imageComponentImage.color.a
-                            );
-
-                            // Apply the dimmer color to the material.
-                            imageComponentImage.color = dimmerColor;
-                            currentStepIndex--;
-                            currentStepTime = 0f; // Reset time for next step
-                        }
-                        
-                    }
-                }
-
-                if (isIncreasingBrightness)
-                {
-                    currentStepIndex++;
-                }
-                else
-                {
-                    currentStepIndex--;
-                }
-
-
-
+                // Show the enemy indicator
+                enemyIndicatorInstance.gameObject.SetActive(true);
+                indicatorCounterTextComponentTextMesh.text = monsterCount.ToString();
+                ProcessBrightness();
             }
             else
             {
-                textmeshComponentCurrent.text = "0";
-                enemyIndicatorInstance.gameObject.SetActive(false); // Hide the enemy indicator
+                // Hide the enemy indicator
+                enemyIndicatorInstance.gameObject.SetActive(false);
+                indicatorCounterTextComponentTextMesh.text = "0";
+            }
+        }
+
+        private static void HandleLanguageChange()
+        {
+            if (languageChanged)
+            {
+                if (indicatorTextComponentTextMesh != null)
+                {
+                    indicatorTextComponentTextMesh.text = locale.GetString("enemy.indicator.lang", lang);
+                }
+            }
+        }
+
+        private static void ProcessBrightness()
+        {
+            if (isIncreasingBrightness)
+            {
+                if (currentStepIndex >= brightnessStepCount)
+                {
+                    // Reached maximum brightness, start decreasing
+                    isIncreasingBrightness = false;
+                }
+                else
+                {
+                    currentStepTime += Time.deltaTime;
+
+                    if (currentStepTime >= stepDuration)
+                    {
+                        // Adjust this factor to control the amount of increase
+                        float brightnessIncreaseFactor = 1.2f;
+                        Color brighterColor = new Color(
+                        Mathf.Clamp(indicatorCounterBackgroundImage.color.r * brightnessIncreaseFactor, 0, 1),
+                        Mathf.Clamp(indicatorCounterBackgroundImage.color.g * brightnessIncreaseFactor, 0, 1),
+                        Mathf.Clamp(indicatorCounterBackgroundImage.color.b * brightnessIncreaseFactor, 0, 1),
+                        indicatorCounterBackgroundImage.color.a
+                        );
+
+                        // Apply the brighter color to the material.
+                        indicatorCounterBackgroundImage.color = brighterColor;
+                        currentStepIndex++;
+                        currentStepTime = 0f; // Reset time for next step
+                    }
+
+                }
+            }
+            else
+            {
+                if (currentStepIndex <= -brightnessStepCount)
+                {
+                    // Reached minimum brightness, start increasing again
+                    isIncreasingBrightness = true;
+                }
+                else
+                {
+                    currentStepTime += Time.deltaTime;
+                    if (currentStepTime >= stepDuration)
+                    {
+                        // Adjust this factor to control the amount of decrease
+                        float brightnessDecreaseFactor = 1f / 1.2f;
+                        Color dimmerColor = new Color(
+                            Mathf.Clamp(indicatorCounterBackgroundImage.color.r * brightnessDecreaseFactor, 0, 1),
+                            Mathf.Clamp(indicatorCounterBackgroundImage.color.g * brightnessDecreaseFactor, 0, 1),
+                            Mathf.Clamp(indicatorCounterBackgroundImage.color.b * brightnessDecreaseFactor, 0, 1),
+                            indicatorCounterBackgroundImage.color.a
+                        );
+
+                        // Apply the dimmer color to the material.
+                        indicatorCounterBackgroundImage.color = dimmerColor;
+                        currentStepIndex--;
+
+                        // Reset time for next step
+                        currentStepTime = 0f;
+                    }
+
+                }
+            }
+
+            if (isIncreasingBrightness)
+            {
+                currentStepIndex++;
+            }
+            else
+            {
+                currentStepIndex--;
             }
         }
     }
