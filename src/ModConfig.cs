@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,7 +19,7 @@ namespace QM_EnemyCountIndicator
 
         // MCM Related Start
         [JsonIgnore]
-        public Color IndicatorBackgroundColor { get; set; }
+        public Color IndicatorBackgroundColor { get; set; } = Helpers.HexStringToUnityColor("#4B1416");
 
         // Default color, but we update it in code just in case.
         //[JsonIgnore]

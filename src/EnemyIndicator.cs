@@ -26,7 +26,8 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         private static Image indicatorCounterBackgroundImage;
         private static Image indicatorContainerBorderImage;
         
-        private static Color IndicatorCounterBackgroundDefault;
+        private static Color IndicatorCounterBackgroundColorDefault;
+        private static Color IndicatorTextColorDefault;
         private static RectTransform enemyIndicatorRectTransform;
 
         // Number of times to increase/decrease brightness before reversing direction.
@@ -118,23 +119,33 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             // button.onClick.AddListener((PointerEventData data) => OnEnemyIndicatorClick(data.button));
 
             // Adjust text of enemy indicator.
-            var indicatorContainerBorder = enemyIndicatorInstance.GetChild(0);
-            var indicatorText = indicatorContainerBorder.GetChild(0);
-            var imageindicatorCounterBackground = indicatorContainerBorder.GetChild(1);
-            var imageindicatorCounterText = imageindicatorCounterBackground.GetChild(0);
+            /* Unity hierarchy for qmorphosStatePrefab
+             * QmorphosState
+             *  - QmorphosStagePanel
+             *     - Stage
+             *     - Image
+             *        - CurrentQMorphos
+             */
+
+            var indicatorContainerBorder = enemyIndicatorInstance.GetChild(0); // QmorphosStagePanel
+            var indicatorText = indicatorContainerBorder.GetChild(0); // Stage
+            var imageindicatorCounterBackground = indicatorContainerBorder.GetChild(1); // Image
+            var imageindicatorCounterText = imageindicatorCounterBackground.GetChild(0); // CurrentQMorphos
 
             indicatorContainerBorderImage = indicatorContainerBorder.GetComponent<Image>();
             indicatorCounterBackgroundImage = imageindicatorCounterBackground.GetComponent<Image>();
 
-            AdjustIndicatorBorderHue(indicatorContainerBorderImage, IndicatorCounterBackgroundDefault, Plugin.Config.IndicatorBackgroundColor);
+            AdjustIndicatorBorderHue(indicatorContainerBorderImage, IndicatorCounterBackgroundColorDefault, Plugin.Config.IndicatorBackgroundColor);
 
-            IndicatorCounterBackgroundDefault = indicatorCounterBackgroundImage.color; // Just making sure we keep original color.
+            IndicatorCounterBackgroundColorDefault = indicatorCounterBackgroundImage.color; // Just making sure we keep original color.
             indicatorCounterBackgroundImage.color = Plugin.Config.IndicatorBackgroundColor;
 
             if (indicatorTextComponentTextMesh == null)
             {
                 indicatorTextComponentTextMesh = indicatorText.GetComponent<TextMeshProUGUI>();
                 indicatorTextComponentTextMesh.text = "ENEMIES";
+                IndicatorTextColorDefault = indicatorTextComponentTextMesh.color; // Just making sure we keep original color.
+                indicatorTextComponentTextMesh.color = Plugin.Config.IndicatorTextColor;
             }
 
             if (indicatorCounterTextComponentTextMesh == null)
