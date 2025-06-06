@@ -12,17 +12,23 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 {
     internal class EnemyIndicator
     {
-        public static bool debugLog = true;
-        public static Transform enemyIndicatorInstance = null;
-        public static int monsterCount = 0;
+        private static bool debugLog = true;
+        private static Transform enemyIndicatorInstance = null;
+        private static int monsterCount = 0;
+        private static int monsterCurrent = 0;
+        private static bool cameraMoveDo = false;
+        private static bool cameraMoveBackToPlayer = false;
+        private static Player player;
+        private static List<Creature> monsters = new List<Creature>();
+        private static CameraMover cameraMover = new CameraMover();
+        private static TextMeshProUGUI indicatorTextComponentTextMesh;
+        private static TextMeshProUGUI indicatorCounterTextComponentTextMesh;
+        private static Image indicatorCounterBackgroundImage;
+        private static Image indicatorContainerBorderImage;
+        
+        private static Color IndicatorCounterBackgroundDefault;
+        private static RectTransform enemyIndicatorRectTransform;
 
-        public static TextMeshProUGUI indicatorTextComponentTextMesh;
-        public static TextMeshProUGUI indicatorCounterTextComponentTextMesh;
-        public static Image indicatorCounterBackgroundImage;
-        public static Image indicatorContainerBorderImage;
-        
-        public static Color IndicatorCounterBackgroundDefault;
-        
         // Number of times to increase/decrease brightness before reversing direction.
         private static int brightnessStepCount = 5;
 
@@ -70,7 +76,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
                 // Instantiate the QmorphosState prefab under the UpperPanel as enemyIndicatorInstance
                 enemyIndicatorInstance = GameObject.Instantiate(qmorphosStatePrefab, upperRight);
-                var enemyIndicatorRect = enemyIndicatorInstance.GetComponent<RectTransform>();
+                enemyIndicatorRectTransform  = enemyIndicatorInstance.GetComponent<RectTransform>();
 
                 // Get the size (width and height) of qmorphosStatePrefab using RectTransform
                 var coordinateOffset = mapButton.GetComponent<RectTransform>();
@@ -84,7 +90,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                     coordinateOffset.sizeDelta.y - 
                     coordinateOffsetHintLabel.sizeDelta.y -
                     offsetPx -
-                    enemyIndicatorRect.sizeDelta.y, 
+                    enemyIndicatorRectTransform .sizeDelta.y, 
                     0);
             }
             else
@@ -105,6 +111,11 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             enemyIndicatorInstance.GetComponent<QMorphosStatePanel>().enabled = false;
             
             enemyIndicatorInstance.name = "EnemyIndicator";
+            SetupEventTriggers();
+
+            // Add an onClick event listener
+            // Button button = enemyIndicatorInstance.gameObject.AddComponent<Button>();
+            // button.onClick.AddListener((PointerEventData data) => OnEnemyIndicatorClick(data.button));
 
             // Adjust text of enemy indicator.
             var indicatorContainerBorder = enemyIndicatorInstance.GetChild(0);
@@ -133,11 +144,56 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             }
         }
 
-        static void ListComponentsRecursive(GameObject obj) {
-            foreach (Component component in obj.GetComponents<Component>()) {
+        private static void SetupEventTriggers()
+        {
+            EventTrigger eventTrigger = enemyIndicatorInstance.gameObject.AddComponent<EventTrigger>();
+
+            PointerEventData.InputButton[] buttons = { 
+                PointerEventData.InputButton.Left, 
+                PointerEventData.InputButton.Right, 
+                //PointerEventData.InputButton.Middle 
+            };
+
+            foreach (var button in buttons)
+            {
+                EventTrigger.Entry entry = new EventTrigger.Entry();
+                entry.eventID = EventTriggerType.PointerClick;
+                entry.callback.AddListener((eventData) =>
+                {
+                    PointerEventData pointerEventData = eventData as PointerEventData;
+                    if (pointerEventData.button == button)
+                    {
+                        OnEnemyIndicatorClick(button);
+                    }
+                });
+                eventTrigger.triggers.Add(entry);
+            }
+        }
+
+        private static void OnEnemyIndicatorClick(PointerEventData.InputButton button)
+        {
+            switch (button)
+            {
+                case PointerEventData.InputButton.Left:
+                    cameraMoveDo = true;
+                    break;
+                case PointerEventData.InputButton.Right:
+                    cameraMoveDo = true;
+                    cameraMoveBackToPlayer = true;
+                    break;
+                //case PointerEventData.InputButton.Middle:
+                //    Plugin.Logger.Log("middle mouse click");
+                //    break;
+            }
+        }
+
+        private static void ListComponentsRecursive(GameObject obj) {
+            foreach (Component component in obj.GetComponents<Component>())
+            {
                 Debug.Log(component.GetType().Name);
             }
-            foreach (Transform child in obj.transform) {
+            foreach (Transform child in obj.transform)
+            {
                 ListComponentsRecursive(child.gameObject);
             }
         }
@@ -181,7 +237,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         //     }
         // }
 
-       public static void AdjustIndicatorBorderHue(Image image, Color sourceColor, Color targetColor)
+        private static void AdjustIndicatorBorderHue(Image image, Color sourceColor, Color targetColor)
         {
             if (image != null && image.sprite != null)
             {
@@ -197,6 +253,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             public static void Postfix(ref ItemsOnFloor itemsOnFloor, ref Creatures creatures, ref MapObstacles mapObstacles, ref MapRenderer mapRenderer, ref MapGrid mapGrid, ref MapEntities mapEntities, ref FireController fireController, ref Visibilities visibilities)
             {
                 monsterCount = CountSeenMonsters(creatures.Monsters);
+                player = creatures.Player;
             }
         }
 
@@ -208,12 +265,15 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             public static void Postfix(Creatures creatures, MapGrid mapGrid, ref bool __result)
             {
                 monsterCount = CountSeenMonsters(creatures.Monsters);
+                player = creatures.Player;
             }
         }
 
         private static int CountSeenMonsters(List<Creature> creatures)
         {
             int monsterCount = 0;
+            monsters.Clear();
+
             foreach (Creature creature in creatures)
             {
                 var monster = (Monster)creature;
@@ -222,17 +282,46 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 if (cell.isSeen)
                 {
                     monsterCount++;
+                    monsters.Add(creature);
                 }
             }
 
             return monsterCount;
         }
 
+        private static void HandleCameraMove(IModContext context)
+        {
+            if (cameraMoveDo)
+            {
+                if (cameraMoveBackToPlayer)
+                {
+                    cameraMover.MoveCameraNextMonster((Creature)player, context.State);
+                    cameraMoveDo = false;
+                    cameraMoveBackToPlayer = false;
+                    return;
+                }
+
+                if (monsters.Count != 0)
+                {
+                    cameraMover.MoveCameraNextMonster(monsters[monsterCurrent], context.State);
+                    cameraMoveDo = false;
+                    monsterCurrent++;
+
+                    if (monsterCurrent >= monsters.Count)
+                    {
+                        monsterCurrent = 0;
+                    }
+                    return;
+                }
+            }
+        }
 
         [Hook(ModHookType.DungeonUpdateBeforeGameLoop)]
         public static void DungeonUpdateBeforeGameLoop(IModContext context)
         {
             // Constant dungeon loop update called every frame
+            HandleCameraMove(context);
+
             if (monsterCount > 0)
             {
                 // Show the enemy indicator
