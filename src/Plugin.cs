@@ -23,32 +23,48 @@ namespace QM_EnemyCountIndicator
 
         // MCM Related Start
         public static string ConfigPath = Path.Combine(ConfigDirectories.ModPersistenceFolder, "config.ini");
+        public static string ConfigPathMCM = Path.Combine(ConfigDirectories.ModPersistenceFolder, "config_mcm.ini");
         // MCM Related End
-        
+
         [Hook(ModHookType.AfterConfigsLoaded)]
         public static void AfterConfig(IModContext context)
         {
             Directory.CreateDirectory(ConfigDirectories.ModPersistenceFolder);
             Config = ModConfig.LoadConfig(ConfigDirectories.ConfigPath);
-       
+
+            /* This is a dirty way to determine updates, we don't merge new config file values to mcm created one, but just replacing it, invalidating customized settings.
+             * New MCM will have the support so gotta wait. */
+            
+            // Handle embedded config.ini
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QM_EnemyCountIndicator.config.ini");
+            StreamReader reader = new StreamReader(stream);
+
+            // Check MD5 of config.ini to determine if we need to replace with with new version.
+            var existingMD5 = File.Exists(ConfigDirectories.ConfigPath) ? Helpers.GetMd5HashFromFilePath(ConfigDirectories.ConfigPath) : null;
+            var newMD5 = Helpers.GetMd5HashFromStream(stream);
+            stream.Seek(0, SeekOrigin.Begin);
+
             // MCM Related Start
 
             Logger.Log($"ConfigPath: {ConfigPath}");
 
+            if (File.Exists(Plugin.ConfigPath) && existingMD5 != newMD5)
+            {
+                Plugin.Logger.Log($"config.ini exists but md5 doesnt match. Replacing: {ConfigPath}");
+                File.Delete(Plugin.ConfigPath);
+                File.Delete(Plugin.ConfigPathMCM); 
+            }
+
             if (!File.Exists(Plugin.ConfigPath))
             {
-                Logger.LogWarning($"ConfigPath DOES NOT EXIST!: {ConfigPath}");
+                Logger.LogWarning($"config.ini does not exist. Adding: {ConfigPath}");
 
                 // Assuming the resource name is "config.ini" and it's under Resources folder
-                using (Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QM_EnemyCountIndicator.config.ini"))
-                {
-                    if (stream != null)
-                    {
-                        StreamReader reader = new StreamReader(stream);
-                        File.WriteAllText(Plugin.ConfigPath, reader.ReadToEnd());
-                    }
-                }
+                File.WriteAllText(Plugin.ConfigPath, reader.ReadToEnd());
             }
+
+            reader.Close();
+            stream.Close();
 
             bool flag = false;
             string text = string.Empty;

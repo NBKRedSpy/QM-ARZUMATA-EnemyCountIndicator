@@ -4,5 +4,9 @@
       "QM_EnemyCountIndicator.dll"
   ],
   "Dependencies": [],
-  "SteamTags": []
+  "SteamTags": [
+    "0.9.1",
+    "0.9",
+    "Quality of Life"
+  ]
 }

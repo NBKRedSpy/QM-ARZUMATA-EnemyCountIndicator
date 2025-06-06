@@ -44,7 +44,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
         // That way we can determine current game language.
         [HarmonyPatch(typeof(Localization), "ActualizeFontAndSize", new Type[] {
-            typeof(TextMeshProUGUI), 
+            typeof(TextMeshProUGUI),
             typeof(Localization.Lang),
             typeof(TextContext),
         })]
@@ -64,7 +64,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         [Hook(ModHookType.DungeonStarted)]
         public static void EnemyCountIndicatorButton(IModContext context)
         {
-            stepDuration = 1f / Plugin.Config.BlinkIntensity;
+            stepDuration = 1f / Plugin.Config.IndicatorBlinkIntensity;
 
             // Find DungeonHudScreen
             var dungeonHud = GameObject.FindObjectOfType<DungeonHudScreen>(true);
@@ -79,7 +79,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             var lowerRight = dungeonHud.transform.Find("LowerRight");
 
             // Find the QmorphosState prefab
-            var qmorphosStatePrefab = lowerRight.transform.Find("QmorphosState"); 
+            var qmorphosStatePrefab = lowerRight.transform.Find("QmorphosState");
 
             // We can rename even more but not required for now.
 
@@ -98,7 +98,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
                 // Instantiate the QmorphosState prefab under the UpperPanel as enemyIndicatorInstance
                 enemyIndicatorInstance = GameObject.Instantiate(qmorphosStatePrefab, upperRight);
-                enemyIndicatorRectTransform  = enemyIndicatorInstance.GetComponent<RectTransform>();
+                enemyIndicatorRectTransform = enemyIndicatorInstance.GetComponent<RectTransform>();
 
                 // Get the size (width and height) of qmorphosStatePrefab using RectTransform
                 var coordinateOffset = mapButton.GetComponent<RectTransform>();
@@ -107,12 +107,12 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 // Set new position based on the position and size of qmorphosStatePrefab.
                 var result = coordinateOffset.localPosition.y - coordinateOffset.sizeDelta.y - 2 - coordinateOffsetHintLabel.sizeDelta.y - 2;
 
-                enemyIndicatorInstance.transform.localPosition = new Vector3(0, 
-                    coordinateOffset.localPosition.y - 
-                    coordinateOffset.sizeDelta.y - 
+                enemyIndicatorInstance.transform.localPosition = new Vector3(0,
+                    coordinateOffset.localPosition.y -
+                    coordinateOffset.sizeDelta.y -
                     coordinateOffsetHintLabel.sizeDelta.y -
                     offsetPx -
-                    enemyIndicatorRectTransform .sizeDelta.y, 
+                    enemyIndicatorRectTransform.sizeDelta.y,
                     0);
             }
             else
@@ -131,7 +131,6 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
             // Disable the QMorphosStatePanel component. We don't need it.
             enemyIndicatorInstance.GetComponent<QMorphosStatePanel>().enabled = false;
-            
             enemyIndicatorInstance.name = "EnemyIndicator";
             SetupEventTriggers();
 
@@ -161,29 +160,24 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             IndicatorCounterBackgroundColorDefault = indicatorCounterBackgroundImage.color; // Just making sure we keep original color.
             indicatorCounterBackgroundImage.color = Plugin.Config.IndicatorBackgroundColor;
 
-            if (indicatorTextComponentTextMesh == null)
-            {
-                indicatorTextComponentTextMesh = indicatorText.GetComponent<TextMeshProUGUI>();
-                // indicatorTextComponentTextMesh.text = "ENEMIES";
-                indicatorTextComponentTextMesh.text = locale.GetString("enemy.indicator.lang", lang);
+            // On floor change, TextMesh component is updated with new id. We do that too now.
+            indicatorTextComponentTextMesh = indicatorText.GetComponent<TextMeshProUGUI>();
+            // indicatorTextComponentTextMesh.text = "ENEMIES";
+            indicatorTextComponentTextMesh.text = locale.GetString("enemy.indicator.lang", lang);
 
-                IndicatorTextColorDefault = indicatorTextComponentTextMesh.color; // Just making sure we keep original color.
-                indicatorTextComponentTextMesh.color = Plugin.Config.IndicatorTextColor;
-            }
+            IndicatorTextColorDefault = indicatorTextComponentTextMesh.color; // Just making sure we keep original color.
+            indicatorTextComponentTextMesh.color = Plugin.Config.IndicatorTextColor;
 
-            if (indicatorCounterTextComponentTextMesh == null)
-            {
-                indicatorCounterTextComponentTextMesh = imageindicatorCounterText.GetComponent<TextMeshProUGUI>();
-                indicatorCounterTextComponentTextMesh.text = "0";
-            }
+            indicatorCounterTextComponentTextMesh = imageindicatorCounterText.GetComponent<TextMeshProUGUI>();
+            indicatorCounterTextComponentTextMesh.text = "0";
         }
 
         private static void SetupEventTriggers()
         {
             EventTrigger eventTrigger = enemyIndicatorInstance.gameObject.AddComponent<EventTrigger>();
 
-            PointerEventData.InputButton[] buttons = { 
-                PointerEventData.InputButton.Left, 
+            PointerEventData.InputButton[] buttons = {
+                PointerEventData.InputButton.Left,
                 PointerEventData.InputButton.Right, 
                 //PointerEventData.InputButton.Middle 
             };
@@ -215,13 +209,14 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                     cameraMoveDo = true;
                     cameraMoveBackToPlayer = true;
                     break;
-                //case PointerEventData.InputButton.Middle:
-                //    Plugin.Logger.Log("middle mouse click");
-                //    break;
+                    //case PointerEventData.InputButton.Middle:
+                    //    Plugin.Logger.Log("middle mouse click");
+                    //    break;
             }
         }
 
-        private static void ListComponentsRecursive(GameObject obj) {
+        private static void ListComponentsRecursive(GameObject obj)
+        {
             foreach (Component component in obj.GetComponents<Component>())
             {
                 Debug.Log(component.GetType().Name);
@@ -276,7 +271,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             if (image != null && image.sprite != null)
             {
                 // Adjust sprite hue with pixel-perfect rendering
-                image.sprite = SpriteHueAdjuster.AdjustSpriteHue(image.sprite,sourceColor,targetColor);
+                image.sprite = SpriteHueAdjuster.AdjustSpriteHue(image.sprite, sourceColor, targetColor);
             }
         }
 
@@ -292,7 +287,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         }
 
         // This one is needed too if enemy moves from view when you skip turn for example
-        [HarmonyPatch(typeof(CreatureSystem), "IsSeeMonsters", new Type[] { typeof(Creatures), typeof(MapGrid)})]
+        [HarmonyPatch(typeof(CreatureSystem), "IsSeeMonsters", new Type[] { typeof(Creatures), typeof(MapGrid) })]
         internal class IsSeeMonsters_Patch
         {
             [HarmonyPostfix]
@@ -313,7 +308,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 var monster = (Monster)creature;
                 MapCell cell = monster._mapGrid.GetCell(monster.CreatureData.Position, false);
 
-                if (cell.isSeen)
+                if (cell.isSeen || Plugin.Config.IndicatorShowAllEnemies)
                 {
                     monsterCount++;
                     monsters.Add(creature);
@@ -367,7 +362,11 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             else
             {
                 // Hide the enemy indicator
-                enemyIndicatorInstance.gameObject.SetActive(false);
+                if (Plugin.Config.IndicatorAutoHide)
+                {
+                    enemyIndicatorInstance.gameObject.SetActive(false);
+                }
+                
                 indicatorCounterTextComponentTextMesh.text = "0";
             }
         }
@@ -385,6 +384,11 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
         private static void ProcessBrightness()
         {
+            if (!Plugin.Config.IndicatorBlinkEnabled || Plugin.Config.IndicatorShowAllEnemies)
+            {
+                return;
+            }
+
             if (isIncreasingBrightness)
             {
                 if (currentStepIndex >= brightnessStepCount)

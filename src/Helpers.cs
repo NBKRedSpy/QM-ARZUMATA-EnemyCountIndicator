@@ -1,9 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.IO;
 using UnityEngine;
+using System.Security.Cryptography;
 
 internal static class Helpers
 {
@@ -36,5 +34,22 @@ internal static class Helpers
 
         // Convert to normalized float values
         return new Color(r / 255f, g / 255f, b / 255f, a / 255f);
+    }
+
+    public static string GetMd5HashFromFilePath(string filePath)
+    {
+        using (var md5 = MD5.Create())
+        using (var stream = File.OpenRead(filePath))
+        {
+            return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+        }
+    }
+
+    public static string GetMd5HashFromStream(Stream stream)
+    {
+        using (var md5 = MD5.Create())
+        {
+            return BitConverter.ToString(md5.ComputeHash(stream)).Replace("-", "").ToLowerInvariant();
+        }
     }
 }
