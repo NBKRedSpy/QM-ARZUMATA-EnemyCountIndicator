@@ -39,8 +39,17 @@ namespace QM_EnemyCountIndicator
         public float CameraMoveSpeed { get; set; } = 10f;
 
         [JsonIgnore]
-        public float BlinkIntensity { get; set; } = 35f;
-        
+        public bool IndicatorBlinkEnabled { get; set; } = true;
+
+        [JsonIgnore]
+        public float IndicatorBlinkIntensity { get; set; } = 35f;
+
+        [JsonIgnore]
+        public bool IndicatorAutoHide { get; set; } = true;
+
+        [JsonIgnore]
+        public bool IndicatorShowAllEnemies { get; set; } = false;
+
         public void LoadConfigMCM(string configPath)
         {
             if (File.Exists(configPath))

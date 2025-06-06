@@ -64,7 +64,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
         [Hook(ModHookType.DungeonStarted)]
         public static void EnemyCountIndicatorButton(IModContext context)
         {
-            stepDuration = 1f / Plugin.Config.BlinkIntensity;
+            stepDuration = 1f / Plugin.Config.IndicatorBlinkIntensity;
 
             // Find DungeonHudScreen
             var dungeonHud = GameObject.FindObjectOfType<DungeonHudScreen>(true);
@@ -308,7 +308,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 var monster = (Monster)creature;
                 MapCell cell = monster._mapGrid.GetCell(monster.CreatureData.Position, false);
 
-                if (cell.isSeen)
+                if (cell.isSeen || Plugin.Config.IndicatorShowAllEnemies)
                 {
                     monsterCount++;
                     monsters.Add(creature);
@@ -362,7 +362,11 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             else
             {
                 // Hide the enemy indicator
-                enemyIndicatorInstance.gameObject.SetActive(false);
+                if (Plugin.Config.IndicatorAutoHide)
+                {
+                    enemyIndicatorInstance.gameObject.SetActive(false);
+                }
+                
                 indicatorCounterTextComponentTextMesh.text = "0";
             }
         }
@@ -380,6 +384,11 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
         private static void ProcessBrightness()
         {
+            if (!Plugin.Config.IndicatorBlinkEnabled || Plugin.Config.IndicatorShowAllEnemies)
+            {
+                return;
+            }
+
             if (isIncreasingBrightness)
             {
                 if (currentStepIndex >= brightnessStepCount)
