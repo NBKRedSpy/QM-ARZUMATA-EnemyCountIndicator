@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using MGSC;
 using ModConfigMenu;
+using QM_McmIniMerger;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -32,39 +33,8 @@ namespace QM_EnemyCountIndicator
             Directory.CreateDirectory(ConfigDirectories.ModPersistenceFolder);
             Config = ModConfig.LoadConfig(ConfigDirectories.ConfigPath);
 
-            /* This is a dirty way to determine updates, we don't merge new config file values to mcm created one, but just replacing it, invalidating customized settings.
-             * New MCM will have the support so gotta wait. */
-            
-            // Handle embedded config.ini
-            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QM_EnemyCountIndicator.config.ini");
-            StreamReader reader = new StreamReader(stream);
-
-            // Check MD5 of config.ini to determine if we need to replace with with new version.
-            var existingMD5 = File.Exists(ConfigDirectories.ConfigPath) ? Helpers.GetMd5HashFromFilePath(ConfigDirectories.ConfigPath) : null;
-            var newMD5 = Helpers.GetMd5HashFromStream(stream);
-            stream.Seek(0, SeekOrigin.Begin);
-
-            // MCM Related Start
-
-            Logger.Log($"ConfigPath: {ConfigPath}");
-
-            if (File.Exists(Plugin.ConfigPath) && existingMD5 != newMD5)
-            {
-                Plugin.Logger.Log($"config.ini exists but md5 doesnt match. Replacing: {ConfigPath}");
-                File.Delete(Plugin.ConfigPath);
-                File.Delete(Plugin.ConfigPathMCM); 
-            }
-
-            if (!File.Exists(Plugin.ConfigPath))
-            {
-                Logger.LogWarning($"config.ini does not exist. Adding: {ConfigPath}");
-
-                // Assuming the resource name is "config.ini" and it's under Resources folder
-                File.WriteAllText(Plugin.ConfigPath, reader.ReadToEnd());
-            }
-
-            reader.Close();
-            stream.Close();
+            UpdateCheck(); // If we update our embedded config.ini, we check existing here.
+            UpdateNewEntries();
 
             bool flag = false;
             string text = string.Empty;
@@ -72,7 +42,7 @@ namespace QM_EnemyCountIndicator
             try
             {
                 flag = Plugin.RegisterToMCM();
-                text = Plugin.GetMCMPath();
+                text = Plugin.GetMCMPath(); // ConfigPathMCM
             }
             catch (Exception)
             {
@@ -95,7 +65,56 @@ namespace QM_EnemyCountIndicator
             Plugin.Config.LoadConfigMCM(Plugin.ConfigPath);
 
             // MCM Related End
+        }
 
+        private static void UpdateNewEntries()
+        {
+            // Try to load mcm file if it exists, to merge existing settings.
+            MergeOptions mergeOptions = new MergeOptions();
+            mergeOptions.AddNewSections = true;
+            mergeOptions.AddNewEntries = true;
+            mergeOptions.RemoveObsoleteSections = true;
+            mergeOptions.RemoveObsoleteEntries = true;
+            mergeOptions.UpdateMetadata = true;
+            mergeOptions.UpdateValues = false;
+            IniMerge.AdvancedMerge(ConfigPathMCM, ConfigPath, ConfigPathMCM, mergeOptions);
+        }
+
+        private static void UpdateCheck()
+        {
+            /* This is a dirty way to determine updates, we don't merge new config file values to mcm created one, but just replacing it, invalidating customized settings.
+             * New MCM will have the support so gotta wait. */
+
+            // Handle embedded config.ini
+            Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("QM_EnemyCountIndicator.config.ini");
+            StreamReader reader = new StreamReader(stream);
+
+            // Check MD5 of config.ini to determine if we need to replace with with new version.
+            var existingMD5 = File.Exists(ConfigPath) ? Helpers.GetMd5HashFromFilePath(ConfigPath) : null;
+            var newMD5 = Helpers.GetMd5HashFromStream(stream);
+            stream.Seek(0, SeekOrigin.Begin);
+
+            // MCM Related Start
+
+            Logger.Log($"ConfigPath: {ConfigPath}");
+
+            if (File.Exists(Plugin.ConfigPath) && existingMD5 != newMD5)
+            {
+                Plugin.Logger.Log($"config.ini exists but md5 doesnt match. Replacing: {ConfigPath}");
+                File.Delete(Plugin.ConfigPath);
+                //File.Delete(Plugin.ConfigPathMCM); 
+            }
+
+            if (!File.Exists(Plugin.ConfigPath))
+            {
+                Logger.LogWarning($"config.ini does not exist. Adding: {ConfigPath}");
+
+                // Assuming the resource name is "config.ini" and it's under Resources folder
+                File.WriteAllText(Plugin.ConfigPath, reader.ReadToEnd());
+            }
+
+            reader.Close();
+            stream.Close();
         }
 
         [Hook(ModHookType.AfterBootstrap)]
