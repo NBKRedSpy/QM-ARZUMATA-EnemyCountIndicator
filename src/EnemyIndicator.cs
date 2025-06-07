@@ -335,17 +335,16 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                     return;
                 }
 
-                if (monsters.Count != 0)
+                if (monsters.Count > 0)
                 {
-                    cameraMover.MoveCameraNextMonster(monsters[monsterCurrent], context.State, Plugin.Config.CameraMoveSpeed);
-                    cameraMoveDo = false;
-                    monsterCurrent++;
-
                     if (monsterCurrent >= monsters.Count)
                     {
                         monsterCurrent = 0;
                     }
-                    return;
+                    
+                    cameraMover.MoveCameraNextMonster(monsters[monsterCurrent], context.State, Plugin.Config.CameraMoveSpeed);
+                    cameraMoveDo = false;
+                    monsterCurrent++;
                 }
             }
         }
