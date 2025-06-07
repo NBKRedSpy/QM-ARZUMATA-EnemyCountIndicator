@@ -44,3 +44,9 @@ Thanks to NBK_RedSpy, Crynano and all the people who make their code open source
 * Add: Enable / Disable indicator blinking.
 * Add: Add option to show all enemies on map in the counter.
 * Add: Add option to auto hide indicator or keep it always on screen.
+
+## 1.0.2 (426ed7b)
+
+* Fix: Incorrect work with monster list leading to log errors.
+* Add: Allies are no longer counted for indicator.
+* Fix: Settings no longer get overwritten every time.
