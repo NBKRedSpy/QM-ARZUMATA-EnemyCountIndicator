@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using MGSC;
 using ModConfigMenu;
 using QM_McmIniMerger;
@@ -46,7 +46,7 @@ namespace QM_EnemyCountIndicator
             }
             catch (Exception)
             {
-                Debug.LogWarning("Loading without MCM.");
+                Plugin.Logger.LogWarning("Loading without MCM.");
                 flag = false;
                 text = string.Empty;
             }
@@ -69,15 +69,19 @@ namespace QM_EnemyCountIndicator
 
         private static void UpdateNewEntries()
         {
-            // Try to load mcm file if it exists, to merge existing settings.
-            MergeOptions mergeOptions = new MergeOptions();
-            mergeOptions.AddNewSections = true;
-            mergeOptions.AddNewEntries = true;
-            mergeOptions.RemoveObsoleteSections = true;
-            mergeOptions.RemoveObsoleteEntries = true;
-            mergeOptions.UpdateMetadata = true;
-            mergeOptions.UpdateValues = false;
-            IniMerge.AdvancedMerge(ConfigPathMCM, ConfigPath, ConfigPathMCM, mergeOptions);
+            if (File.Exists(ConfigPathMCM))
+            {
+                // Try to load mcm file if it exists, to merge existing settings.
+                MergeOptions mergeOptions = new MergeOptions();
+                mergeOptions.AddNewSections = true;
+                mergeOptions.AddNewEntries = true;
+                mergeOptions.RemoveObsoleteSections = true;
+                mergeOptions.RemoveObsoleteEntries = true;
+                mergeOptions.UpdateMetadata = true;
+                mergeOptions.UpdateValues = false;
+                IniMerge.AdvancedMerge(ConfigPathMCM, ConfigPath, ConfigPathMCM, mergeOptions);
+            }
+   
         }
 
         private static void UpdateCheck()
@@ -107,7 +111,7 @@ namespace QM_EnemyCountIndicator
 
             if (!File.Exists(Plugin.ConfigPath))
             {
-                Logger.LogWarning($"config.ini does not exist. Adding: {ConfigPath}");
+                Plugin.Logger.LogWarning($"config.ini does not exist. Adding: {ConfigPath}");
 
                 // Assuming the resource name is "config.ini" and it's under Resources folder
                 File.WriteAllText(Plugin.ConfigPath, reader.ReadToEnd());
