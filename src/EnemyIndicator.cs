@@ -14,13 +14,15 @@ namespace QM_ARZUMATA_EnemyCountIndicator
     {
         private static bool debugLog = false;
         private static Transform enemyIndicatorInstance = null;
-        private static int monsterCount = 0;
+        private static int monsterCountSeen = 0;
+        private static int monsterCountTotal = 0;
         private static int monsterCurrent = 0;
         private static bool cameraMoveDo = false;
         private static bool cameraMoveBackToPlayer = false;
         private static Player player;
         private static Locale locale = new Locale();
-        private static List<Creature> monsters = new List<Creature>();
+        private static List<Creature> monstersTotal = new List<Creature>();
+        private static List<Creature> monstersSeen = new List<Creature>();
         private static CameraMover cameraMover = new CameraMover();
         private static TextMeshProUGUI indicatorTextComponentTextMesh;
         private static TextMeshProUGUI indicatorCounterTextComponentTextMesh;
@@ -281,7 +283,8 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             [HarmonyPostfix]
             public static void Postfix(ref ItemsOnFloor itemsOnFloor, ref Creatures creatures, ref MapObstacles mapObstacles, ref MapRenderer mapRenderer, ref MapGrid mapGrid, ref MapEntities mapEntities, ref FireController fireController, ref Visibilities visibilities)
             {
-                monsterCount = CountSeenMonsters(creatures.Monsters);
+                monsterCountSeen = CountSeenMonsters(creatures.Monsters, out int total);
+                monsterCountTotal = total;
                 player = creatures.Player;
             }
         }
@@ -293,15 +296,18 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             [HarmonyPostfix]
             public static void Postfix(Creatures creatures, MapGrid mapGrid, ref bool __result)
             {
-                monsterCount = CountSeenMonsters(creatures.Monsters);
+                monsterCountSeen = CountSeenMonsters(creatures.Monsters, out int total);
+                monsterCountTotal = total;
                 player = creatures.Player;
             }
         }
 
-        private static int CountSeenMonsters(List<Creature> creatures)
+        private static int CountSeenMonsters(List<Creature> creatures, out int totalMonsters)
         {
-            int monsterCount = 0;
-            monsters.Clear();
+            totalMonsters = 0;
+            int seenMonsters = 0;
+            monstersTotal.Clear();
+            monstersSeen.Clear();
 
             foreach (Creature creature in creatures)
             {
@@ -313,14 +319,20 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 var monster = (Monster)creature;
                 MapCell cell = monster._mapGrid.GetCell(monster.CreatureData.Position, false);
 
-                if (cell.isSeen || Plugin.Config.IndicatorShowAllEnemies)
+                if (cell.isSeen)
                 {
-                    monsterCount++;
-                    monsters.Add(creature);
+                    seenMonsters++;
+                    monstersSeen.Add(monster);
+                }
+
+                if (Plugin.Config.IndicatorShowAllEnemies)
+                {
+                    totalMonsters++;
+                    monstersTotal.Add(monster);
                 }
             }
 
-            return monsterCount;
+            return seenMonsters;
         }
 
         private static void HandleCameraMove(IModContext context)
@@ -335,14 +347,14 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                     return;
                 }
 
-                if (monsters.Count > 0)
+                if (monstersSeen.Count > 0)
                 {
-                    if (monsterCurrent >= monsters.Count)
+                    if (monsterCurrent >= monstersSeen.Count)
                     {
                         monsterCurrent = 0;
                     }
-                    
-                    cameraMover.MoveCameraNextMonster(monsters[monsterCurrent], context.State, Plugin.Config.CameraMoveSpeed);
+
+                    cameraMover.MoveCameraNextMonster(monstersSeen[monsterCurrent], context.State, Plugin.Config.CameraMoveSpeed);
                     cameraMoveDo = false;
                     monsterCurrent++;
                 }
@@ -356,12 +368,16 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             HandleCameraMove(context);
             HandleLanguageChange();
 
-            if (monsterCount > 0)
+            if (monsterCountSeen > 0 || (Plugin.Config.IndicatorShowAllEnemies && monsterCountTotal > 0))
             {
                 // Show the enemy indicator
                 enemyIndicatorInstance.gameObject.SetActive(true);
-                indicatorCounterTextComponentTextMesh.text = monsterCount.ToString();
-                ProcessBrightness();
+                indicatorCounterTextComponentTextMesh.text = Plugin.Config.IndicatorShowAllEnemies ? monsterCountTotal.ToString() : monsterCountSeen.ToString();
+                
+                if (monsterCountSeen > 0)
+                {
+                    ProcessBrightness();
+                }
             }
             else
             {
@@ -370,7 +386,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
                 {
                     enemyIndicatorInstance.gameObject.SetActive(false);
                 }
-                
+
                 indicatorCounterTextComponentTextMesh.text = "0";
             }
         }
@@ -388,7 +404,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
 
         private static void ProcessBrightness()
         {
-            if (!Plugin.Config.IndicatorBlinkEnabled || Plugin.Config.IndicatorShowAllEnemies)
+            if (!Plugin.Config.IndicatorBlinkEnabled)
             {
                 return;
             }
