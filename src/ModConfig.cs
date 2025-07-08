@@ -54,6 +54,18 @@ namespace QM_EnemyCountIndicator
         [JsonIgnore]
         public bool IndicatorShowAllEnemies { get; set; } = false;
 
+        [JsonIgnore]
+        public string Date { get; set; }
+
+        [JsonIgnore]
+        public string Commit { get; set; }
+
+        [JsonIgnore]
+        public string About1 { get; set; }
+
+        [JsonIgnore]
+        public string About2 { get; set; }
+
         public void LoadConfigMCM(string configPath)
         {
             if (File.Exists(configPath))
