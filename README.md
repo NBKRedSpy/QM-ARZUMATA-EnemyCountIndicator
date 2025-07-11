@@ -50,3 +50,10 @@ Thanks to NBK_RedSpy, Crynano and all the people who make their code open source
 * Fix: Incorrect work with monster list leading to log errors.
 * Add: Allies are no longer counted for indicator.
 * Fix: Settings no longer get overwritten every time.
+
+## 1.0.3 (3d9e4f1)
+* Tweaks: Indicator now blinks for seen monsters even if you set it to show total count only.
+
+## 1.0.4 (2e8fd4b)
+* Fix: If game was on stable, mod wasn't working.
+* Add: Dual version Stable and Beta support.

@@ -365,3 +365,9 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /SteamMod
+
+/QM_*.zip
+/QM_Var
+Steam*.txt
+/.config
+/.continue

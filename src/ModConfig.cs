@@ -10,12 +10,16 @@ using MGSC;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using UnityEngine;
+using static ModConfigMenu.ModConfigMenuAPI;
 
 namespace QM_EnemyCountIndicator
 {
     public class ModConfig
     {
         // Thanks Crynano
+
+        [JsonIgnore]
+        public bool DebugLog { get; set; } = false;
 
         // MCM Related Start
         [JsonIgnore]
@@ -49,6 +53,18 @@ namespace QM_EnemyCountIndicator
 
         [JsonIgnore]
         public bool IndicatorShowAllEnemies { get; set; } = false;
+
+        [JsonIgnore]
+        public string Date { get; set; }
+
+        [JsonIgnore]
+        public string Commit { get; set; }
+
+        [JsonIgnore]
+        public string About1 { get; set; }
+
+        [JsonIgnore]
+        public string About2 { get; set; }
 
         public void LoadConfigMCM(string configPath)
         {

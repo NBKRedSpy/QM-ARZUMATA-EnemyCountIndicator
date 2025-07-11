@@ -15,6 +15,11 @@ namespace QM_EnemyCountIndicator
     /// </summary>
     public class Logger
     {
+        public bool IsEnabled 
+        {
+            get { return Plugin.Config?.DebugLog ?? false; }
+            set { Plugin.Config.DebugLog = value; }
+        }
 
         /// <summary>
         /// The identifier to include at the start of every line.
@@ -34,23 +39,35 @@ namespace QM_EnemyCountIndicator
 
         public void Log(string message)
         {
-            Debug.Log($"[{LogPrefix}] {message}");
+            if (IsEnabled)
+            {
+                Debug.Log($"[{LogPrefix}] {message}");
+            }
         }
 
         public void LogWarning(string message)
         {
-            Debug.LogWarning($"[{LogPrefix}] {message}");
+            if (IsEnabled)
+            {
+                Debug.LogWarning($"[{LogPrefix}] {message}");
+            }
         }
 
         public void LogError(string message)
         {
-            Debug.LogError($"[{LogPrefix}] {message}");
+            if (IsEnabled)
+            {
+                Debug.LogError($"[{LogPrefix}] {message}");
+            }
         }
 
         public void LogException(Exception ex)
         {
-            Debug.LogError($"[{LogPrefix}] Exception Logged:");
-            Debug.LogException(ex);
+            if (IsEnabled)
+            {
+                Debug.LogError($"[{LogPrefix}] Exception Logged:");
+                Debug.LogException(ex);
+            }
         }
     }
 }

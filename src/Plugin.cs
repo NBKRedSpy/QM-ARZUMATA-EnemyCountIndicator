@@ -1,4 +1,4 @@
-﻿using HarmonyLib;
+using HarmonyLib;
 using MGSC;
 using ModConfigMenu;
 using QM_McmIniMerger;
@@ -15,6 +15,7 @@ namespace QM_EnemyCountIndicator
 {
     public static class Plugin
     {
+        public static Harmony harmony;
 
         public static ConfigDirectories ConfigDirectories = new ConfigDirectories();
 
@@ -46,7 +47,7 @@ namespace QM_EnemyCountIndicator
             }
             catch (Exception)
             {
-                Debug.LogWarning("Loading without MCM.");
+                Plugin.Logger.LogWarning("Loading without MCM.");
                 flag = false;
                 text = string.Empty;
             }
@@ -69,15 +70,19 @@ namespace QM_EnemyCountIndicator
 
         private static void UpdateNewEntries()
         {
-            // Try to load mcm file if it exists, to merge existing settings.
-            MergeOptions mergeOptions = new MergeOptions();
-            mergeOptions.AddNewSections = true;
-            mergeOptions.AddNewEntries = true;
-            mergeOptions.RemoveObsoleteSections = true;
-            mergeOptions.RemoveObsoleteEntries = true;
-            mergeOptions.UpdateMetadata = true;
-            mergeOptions.UpdateValues = false;
-            IniMerge.AdvancedMerge(ConfigPathMCM, ConfigPath, ConfigPathMCM, mergeOptions);
+            if (File.Exists(ConfigPathMCM))
+            {
+                // Try to load mcm file if it exists, to merge existing settings.
+                MergeOptions mergeOptions = new MergeOptions();
+                mergeOptions.AddNewSections = true;
+                mergeOptions.AddNewEntries = true;
+                mergeOptions.RemoveObsoleteSections = true;
+                mergeOptions.RemoveObsoleteEntries = true;
+                mergeOptions.UpdateMetadata = true;
+                mergeOptions.UpdateValues = false;
+                IniMerge.AdvancedMerge(ConfigPathMCM, ConfigPath, ConfigPathMCM, mergeOptions);
+            }
+   
         }
 
         private static void UpdateCheck()
@@ -107,7 +112,7 @@ namespace QM_EnemyCountIndicator
 
             if (!File.Exists(Plugin.ConfigPath))
             {
-                Logger.LogWarning($"config.ini does not exist. Adding: {ConfigPath}");
+                Plugin.Logger.LogWarning($"config.ini does not exist. Adding: {ConfigPath}");
 
                 // Assuming the resource name is "config.ini" and it's under Resources folder
                 File.WriteAllText(Plugin.ConfigPath, reader.ReadToEnd());
@@ -120,8 +125,50 @@ namespace QM_EnemyCountIndicator
         [Hook(ModHookType.AfterBootstrap)]
         public static void Bootstrap(IModContext context)
         {
-            new Harmony("ARZUMATA_" + ConfigDirectories.ModAssemblyName).PatchAll();
+            var version = Data.Global.BuildVersion;
+            bool beta = false;
+            if (version.Contains("0.9.2."))
+            {
+                // It's beta
+                beta = true;
+            }
+
+            string mainDllPath = Assembly.GetExecutingAssembly().Location;
+            string mainDllDirectory = Path.GetDirectoryName(mainDllPath);
+
+            harmony = new Harmony("ARZUMATA_" + ConfigDirectories.ModAssemblyName);
+
+            harmony.PatchAll();
+
+            var stableDllPath = Path.Combine(mainDllDirectory, "QM_EnemyCountIndicator_Stable.dll");
+            var betaDllPath = Path.Combine(mainDllDirectory, "QM_EnemyCountIndicator_Beta.dll");
+            Console.WriteLine($"Exists Beta {File.Exists(betaDllPath)}");
+            Console.WriteLine($"Exists Stable {File.Exists(stableDllPath)}");
+
+            if (beta)
+            {
+                Console.WriteLine($"Patching Beta");
+
+                Assembly assembly = Assembly.LoadFrom(betaDllPath);
+                harmony.PatchAll(assembly); // Apply patches from the loaded DLL
+            }
+            else
+            {
+                Console.WriteLine($"Patching Stable");
+                Assembly assembly = Assembly.LoadFrom(stableDllPath);
+                harmony.PatchAll(assembly); // Apply patches from the loaded DLL
+            }
+            //Assembly assembly = Assembly.LoadFrom(dllPath);
+            //harmony.PatchAll(assembly); // Apply patches from the loaded DLL
+
+
         }
+
+        //[Hook(ModHookType.AfterBootstrap)]
+        //public static void Bootstrap(IModContext context)
+        //{
+        //    new Harmony("ARZUMATA_" + ConfigDirectories.ModAssemblyName).PatchAll();
+        //}
 
         // MCM Related Start
         private static bool RegisterToMCM()
