@@ -366,7 +366,8 @@ MigrationBackup/
 FodyWeavers.xsd
 /SteamMod
 
-/QM_*
+/QM_*.zip
+/QM_Var
 Steam*.txt
 /.config
 /.continue

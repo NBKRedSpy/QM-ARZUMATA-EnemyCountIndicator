@@ -1,6 +1,5 @@
 using HarmonyLib;
 using MGSC;
-using QM_EnemyCountIndicator;
 using System;
 using System.Collections.Generic;
 using TMPro;
@@ -8,18 +7,18 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-namespace QM_ARZUMATA_EnemyCountIndicator
+namespace QM_EnemyCountIndicator
 {
-    internal class EnemyIndicator
+    public class EnemyIndicator
     {
         private static bool debugLog = false;
         private static Transform enemyIndicatorInstance = null;
-        private static int monsterCountSeen = 0;
-        private static int monsterCountTotal = 0;
+        public static int monsterCountSeen = 0;
+        public static int monsterCountTotal = 0;
+        public static Player player;
         private static int monsterCurrent = 0;
         private static bool cameraMoveDo = false;
         private static bool cameraMoveBackToPlayer = false;
-        private static Player player;
         private static Locale locale = new Locale();
         private static List<Creature> monstersTotal = new List<Creature>();
         private static List<Creature> monstersSeen = new List<Creature>();
@@ -277,17 +276,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             }
         }
 
-        [HarmonyPatch(typeof(VisibilitySystem), "UpdateVisibility", new Type[] { typeof(ItemsOnFloor), typeof(Creatures), typeof(MapObstacles), typeof(MapRenderer), typeof(MapGrid), typeof(MapEntities), typeof(FireController), typeof(Visibilities) })]
-        public static class UpdateVisibility_Patch
-        {
-            [HarmonyPostfix]
-            public static void Postfix(ref ItemsOnFloor itemsOnFloor, ref Creatures creatures, ref MapObstacles mapObstacles, ref MapRenderer mapRenderer, ref MapGrid mapGrid, ref MapEntities mapEntities, ref FireController fireController, ref Visibilities visibilities)
-            {
-                monsterCountSeen = CountSeenMonsters(creatures.Monsters, out int total);
-                monsterCountTotal = total;
-                player = creatures.Player;
-            }
-        }
+
 
         // This one is needed too if enemy moves from view when you skip turn for example
         [HarmonyPatch(typeof(CreatureSystem), "IsSeeMonsters", new Type[] { typeof(Creatures), typeof(MapGrid) })]
@@ -302,7 +291,7 @@ namespace QM_ARZUMATA_EnemyCountIndicator
             }
         }
 
-        private static int CountSeenMonsters(List<Creature> creatures, out int totalMonsters)
+        public static int CountSeenMonsters(List<Creature> creatures, out int totalMonsters)
         {
             totalMonsters = 0;
             int seenMonsters = 0;

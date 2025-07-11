@@ -15,6 +15,7 @@ namespace QM_EnemyCountIndicator
 {
     public static class Plugin
     {
+        public static Harmony harmony;
 
         public static ConfigDirectories ConfigDirectories = new ConfigDirectories();
 
@@ -124,8 +125,50 @@ namespace QM_EnemyCountIndicator
         [Hook(ModHookType.AfterBootstrap)]
         public static void Bootstrap(IModContext context)
         {
-            new Harmony("ARZUMATA_" + ConfigDirectories.ModAssemblyName).PatchAll();
+            var version = Data.Global.BuildVersion;
+            bool beta = false;
+            if (version.Contains("0.9.2."))
+            {
+                // It's beta
+                beta = true;
+            }
+
+            string mainDllPath = Assembly.GetExecutingAssembly().Location;
+            string mainDllDirectory = Path.GetDirectoryName(mainDllPath);
+
+            harmony = new Harmony("ARZUMATA_" + ConfigDirectories.ModAssemblyName);
+
+            harmony.PatchAll();
+
+            var stableDllPath = Path.Combine(mainDllDirectory, "QM_EnemyCountIndicator_Stable.dll");
+            var betaDllPath = Path.Combine(mainDllDirectory, "QM_EnemyCountIndicator_Beta.dll");
+            Console.WriteLine($"Exists Beta {File.Exists(betaDllPath)}");
+            Console.WriteLine($"Exists Stable {File.Exists(stableDllPath)}");
+
+            if (beta)
+            {
+                Console.WriteLine($"Patching Beta");
+
+                Assembly assembly = Assembly.LoadFrom(betaDllPath);
+                harmony.PatchAll(assembly); // Apply patches from the loaded DLL
+            }
+            else
+            {
+                Console.WriteLine($"Patching Stable");
+                Assembly assembly = Assembly.LoadFrom(stableDllPath);
+                harmony.PatchAll(assembly); // Apply patches from the loaded DLL
+            }
+            //Assembly assembly = Assembly.LoadFrom(dllPath);
+            //harmony.PatchAll(assembly); // Apply patches from the loaded DLL
+
+
         }
+
+        //[Hook(ModHookType.AfterBootstrap)]
+        //public static void Bootstrap(IModContext context)
+        //{
+        //    new Harmony("ARZUMATA_" + ConfigDirectories.ModAssemblyName).PatchAll();
+        //}
 
         // MCM Related Start
         private static bool RegisterToMCM()
