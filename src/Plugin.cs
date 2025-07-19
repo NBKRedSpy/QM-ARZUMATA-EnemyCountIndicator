@@ -125,9 +125,12 @@ namespace QM_EnemyCountIndicator
         [Hook(ModHookType.AfterBootstrap)]
         public static void Bootstrap(IModContext context)
         {
-            var version = Data.Global.BuildVersion;
+            var version = Data.Global.BuildVersion.Split('.');
+
             bool beta = false;
-            if (version.Contains("0.9.2."))
+
+            if (version.Length == 5)
+            //if (version.Contains("0.9.2."))
             {
                 // It's beta
                 beta = true;
