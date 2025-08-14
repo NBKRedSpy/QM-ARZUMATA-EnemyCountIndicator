@@ -82,7 +82,7 @@ namespace QM_EnemyCountIndicator
                 mergeOptions.UpdateValues = false;
                 IniMerge.AdvancedMerge(ConfigPathMCM, ConfigPath, ConfigPathMCM, mergeOptions);
             }
-   
+
         }
 
         private static void UpdateCheck()
@@ -125,15 +125,53 @@ namespace QM_EnemyCountIndicator
         [Hook(ModHookType.AfterBootstrap)]
         public static void Bootstrap(IModContext context)
         {
-            var version = Data.Global.BuildVersion.Split('.');
+            string buildVersion = Data.Global.BuildVersion; // e.g. "0.9.5.1.414s.d1e59aa"
+            string[] parts = buildVersion.Split('.');
+            var numericParts = parts
+                    .Where(part => part.All(char.IsDigit)) // Only fully numeric parts
+                    .Select(int.Parse)
+                    .ToArray();
 
-            bool beta = false;
+            bool beta = true;
 
-            if (version.Length == 5)
-            //if (version.Contains("0.9.2."))
+            string cleanedVersionString = string.Empty;
+
+            Console.WriteLine($"Original version parts: [{string.Join(", ", parts)}]");
+            Console.WriteLine($"Numeric parts: [{string.Join(", ", numericParts)}]");
+
+            Version version;
+            try
             {
-                // It's beta
-                beta = true;
+                switch (numericParts.Length)
+                {
+                    case 1:
+                        version = new Version(numericParts[0], 0);
+                        break;
+                    case 2:
+                        version = new Version(numericParts[0], numericParts[1]);
+                        break;
+                    case 3:
+                        version = new Version(numericParts[0], numericParts[1], numericParts[2]);
+                        break;
+                    default:
+                        version = new Version(numericParts[0], numericParts[1], numericParts[2], numericParts[3]);
+                        break;
+                }
+
+                cleanedVersionString = string.Join(".", numericParts);
+                Console.WriteLine($"Parsed Version: {version}");
+                Console.WriteLine($"Cleaned version string: {cleanedVersionString}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to create Version object: {ex.Message}");
+            }
+
+            //if (version.Length == 5)
+            if (cleanedVersionString.Equals("0.9.5"))
+            {
+                // It's stable
+                beta = false;
             }
 
             string mainDllPath = Assembly.GetExecutingAssembly().Location;
@@ -147,6 +185,7 @@ namespace QM_EnemyCountIndicator
             var betaDllPath = Path.Combine(mainDllDirectory, "QM_EnemyCountIndicator_Beta.dll");
             Console.WriteLine($"Exists Beta {File.Exists(betaDllPath)}");
             Console.WriteLine($"Exists Stable {File.Exists(stableDllPath)}");
+            Console.WriteLine($"Beta?: {beta}");
 
             if (beta)
             {
