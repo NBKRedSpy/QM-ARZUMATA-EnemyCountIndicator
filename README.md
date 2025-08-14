@@ -57,3 +57,7 @@ Thanks to NBK_RedSpy, Crynano and all the people who make their code open source
 ## 1.0.4 (2e8fd4b)
 * Fix: If game was on stable, mod wasn't working.
 * Add: Dual version Stable and Beta support.
+
+## 1.0.5 (460c171)
+* Remove Harmony and Newtonsoft.Json DLLS from build.
+* Better version detection for stable / beta branch.
