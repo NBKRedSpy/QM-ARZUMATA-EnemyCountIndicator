@@ -35,7 +35,7 @@ This is a continuation of Arzumata's mod of the same name.
 Thank you to Arzumata for not only giving permission to continue the mod, but also providing the source code.
 
 # Source Code
-Source code is available on [GitHub](https://github.com/NBK_RedSpy/EnemyCountIndicator)
+Source code is available on [GitHub](https://github.com/NBKRedSpy/QM-ARZUMATA-EnemyCountIndicator)
 
 From Arzumata in the original doc: Thanks to NBK_RedSpy, Crynano and all the people who make their code open source.
 Thank you to Arzumata for the excellent mod.
