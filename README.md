@@ -1,4 +1,4 @@
-# QM_EnemyCountIndicator
+# EnemyCountIndicator - Continued...
 
 A mod for the game Quasimorph that displays an indicator showing the number of enemies if your operative sees them.
 This mod enhances player awareness and strategic decision-making by providing real-time information about enemy presence.
@@ -30,14 +30,35 @@ As alternative you can find config files in:
 |CameraMoveSpeed|10|How quickly camera moves between enemies. Range is 1 to 10.|
 
 
-# Source Code
-Source code is available on [GitHub](https://github.com/ARZUMATA/QM-ARZUMATA-EnemyCountIndicator)
+# Continued ...
+This is a continuation of Arzumata's mod of the same name.
+Thank you to Arzumata for not only giving permission to continue the mod, but also providing the source code.
 
-Thanks to NBK_RedSpy, Crynano and all the people who make their code open source.
+# Source Code
+Source code is available on [GitHub](https://github.com/NBK_RedSpy/EnemyCountIndicator)
+
+From Arzumata in the original doc: Thanks to NBK_RedSpy, Crynano and all the people who make their code open source.
+Thank you to Arzumata for the excellent mod.
 
 # Change Log
-## 1.0 (9a50fd0)
-* Initial release
+## 2.0.0
+* Continuation of Arzumata's mod with permission.
+
+## 1.0.5 (460c171)
+* Remove Harmony and Newtonsoft.Json DLLS from build.
+* Better version detection for stable / beta branch.
+
+## 1.0.4 (2e8fd4b)
+* Fix: If game was on stable, mod wasn't working.
+* Add: Dual version Stable and Beta support.
+
+## 1.0.3 (3d9e4f1)
+* Tweaks: Indicator now blinks for seen monsters even if you set it to show total count only.
+
+## 1.0.2 (426ed7b)
+* Fix: Incorrect work with monster list leading to log errors.
+* Add: Allies are no longer counted for indicator.
+* Fix: Settings no longer get overwritten every time.
 
 ## 1.0.1 (7fb8149)
 * Fix: Indicator bugging out on floor change.
@@ -45,19 +66,5 @@ Thanks to NBK_RedSpy, Crynano and all the people who make their code open source
 * Add: Add option to show all enemies on map in the counter.
 * Add: Add option to auto hide indicator or keep it always on screen.
 
-## 1.0.2 (426ed7b)
-
-* Fix: Incorrect work with monster list leading to log errors.
-* Add: Allies are no longer counted for indicator.
-* Fix: Settings no longer get overwritten every time.
-
-## 1.0.3 (3d9e4f1)
-* Tweaks: Indicator now blinks for seen monsters even if you set it to show total count only.
-
-## 1.0.4 (2e8fd4b)
-* Fix: If game was on stable, mod wasn't working.
-* Add: Dual version Stable and Beta support.
-
-## 1.0.5 (460c171)
-* Remove Harmony and Newtonsoft.Json DLLS from build.
-* Better version detection for stable / beta branch.
+## 1.0 (9a50fd0)
+* Initial release

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using MGSC;
 
-namespace QM_EnemyCountIndicator
+namespace QM_EnemyCountIndicator_Continued
 {
     internal class Locale
     {

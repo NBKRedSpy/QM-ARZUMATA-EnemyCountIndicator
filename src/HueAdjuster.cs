@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace QM_EnemyCountIndicator
+namespace QM_EnemyCountIndicator_Continued
 {
     public class SpriteHueAdjuster
     {

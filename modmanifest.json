@@ -1,10 +1,11 @@
 {
-  "UniqueModName": "ARZUMATA_EnemyCountIndicator",
+  "UniqueModName": "ARZUMATA_NBK_RedSpy_EnemyCountIndicator_Continued",
   "Assemblies": [
-      "QM_EnemyCountIndicator.dll"
+      "QM_EnemyCountIndicator_Continued.dll"
   ],
   "Dependencies": [],
   "SteamTags": [
+    "0.9.5",
     "0.9.1",
     "0.9",
     "Quality of Life"

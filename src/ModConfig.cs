@@ -12,7 +12,7 @@ using Newtonsoft.Json.Converters;
 using UnityEngine;
 using static ModConfigMenu.ModConfigMenuAPI;
 
-namespace QM_EnemyCountIndicator
+namespace QM_EnemyCountIndicator_Continued
 {
     public class ModConfig
     {

@@ -4,9 +4,9 @@
     <OutputType>Library</OutputType>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   </PropertyGroup>
-  <PropertyGroup>
+	<PropertyGroup>
 		<GAME_NAME>Quasimorph</GAME_NAME>
-		<SteamId>3494336727</SteamId>
+		<SteamId>3568856867</SteamId>
 	</PropertyGroup>
 	<PropertyGroup>
 		<GAME_PATH Condition="!Exists('$(GAME_PATH)')">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App $(GAME_STEAM_ID)', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</GAME_PATH>
@@ -18,27 +18,29 @@
 	</PropertyGroup>
 	<PropertyGroup>
 		<WorkshopPath>$(GAME_PATH)\..\..\workshop\content\2059170\$(SteamId)\</WorkshopPath>
-		<ManagedPath>D:\Repositories\Quasimorph\_ManagedAssemblies\Stable\</ManagedPath>
+		<ManagedPath>$(GAME_PATH)\$(GAME_NAME)_Data\Managed\</ManagedPath>
+		<MCM_PATH>$(GAME_PATH)\..\..\workshop\content\2059170\3469678797\MCM.dll</MCM_PATH>
 	</PropertyGroup>
 	<ItemGroup>
-	  <Compile Remove="Move To Root\**" />
-	  <EmbeddedResource Remove="Move To Root\**" />
-	  <None Remove="Move To Root\**" />
 	</ItemGroup>
 	<ItemGroup>
 	  <None Remove="config.ini" />
 	</ItemGroup>
-
 	<ItemGroup>
+	  <EmbeddedResource Include="config.ini" />
+	</ItemGroup>
+	<ItemGroup>
+		<Reference Include="MCM">
+			<HintPath Condition="Exists($(MCM_PATH))">$(MCM_PATH)</HintPath>
+			<HintPath Condition="!Exists($(MCM_PATH))">./lib-stripped/MCM-stripped.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 		<Reference Include="Assembly-CSharp" publicize="true">
 			<HintPath>$(ManagedPath)Assembly-CSharp.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
-		<Reference Include="MCM">
-		  <HintPath>..\..\..\..\Games\Steam\steamapps\workshop\content\2059170\3469678797\MCM.dll</HintPath>
-		</Reference>
 		<Reference Include="QM_McmIniMerger">
-		  <HintPath>..\..\QM_McmIniMerger\bin\Debug\QM_McmIniMerger.dll</HintPath>
+		  <HintPath>lib/QM_McmIniMerger.dll</HintPath>
 		  <Private>True</Private>
 		</Reference>
 		<Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
@@ -93,15 +95,28 @@
 		<Message Text="Deleting Build Artifacts from BepInEx Publicizer" />
 		<Delete Files="@(ArtifactFiles)" />
 	</Target>
-	<ItemGroup>
-	  <ProjectReference Include="..\src\QM_EnemyCountIndicator.csproj" />
-	</ItemGroup>
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="@echo off&#xD;&#xA;set deployDir=&quot;$(WorkshopPath)&quot;&#xD;&#xA;&#xD;&#xA;xcopy /f /y &quot;../modmanifest.json&quot; &quot;$(TargetDir)&quot;&#xD;&#xA;&#xD;&#xA;if '$(SteamId)'=='' (echo SteamId in project not set.  Aborting Workshop Deployment &amp;&amp; exit)&#xD;&#xA;echo deploying to %25deployDir%25&#xD;&#xA;&#xD;&#xA;mkdir &quot;$(WorkshopPath)&quot;&#xD;&#xA;&#xD;&#xA;xcopy /f /y &quot;$(ProjectDir)../media/thumbnail.png&quot; %25deployDir%25&#xD;&#xA;xcopy /f /y &quot;$(ProjectDir)../modmanifest.json&quot; %25deployDir%25&#xD;&#xA;&#xD;&#xA;xcopy /f /y   &quot;$(TargetDir)$(TargetName).*&quot; %25deployDir%25&#xD;&#xA;xcopy /f /y   &quot;$(TargetDir)QM_McmIniMerger.dll&quot; %25deployDir%25&#xD;&#xA;&#xD;&#xA;" />
+		<ItemGroup>
+			<WorkshopSourceFile Include="$(WorkshopPath)*.*" />
+			<PackageRemoveFiles Include="$(PackageFolder)$(TargetName)/*.pdb" />
+		</ItemGroup>
+	</Target>
+	<Target Condition="'$(SteamId)'!=''" Name="PostBuildPackage" AfterTargets="PostBuildEvent">
+		<ItemGroup>
+			<WorkshopSourceFile Include="$(WorkshopPath)*.*" />
+			<PackageRemoveFiles Include="$(PackageFolder)$(TargetName)/*.pdb" />
+		</ItemGroup>
+
+		<Message Text="---------- Creating Package: $(PackageFolder)$(TargetName)/*.pdb" Importance="high" />
+		<RemoveDir Directories="$(PackageFolder)" />
+		<Copy SourceFiles="@(WorkshopSourceFile)" DestinationFolder="$(PackageFolder)$(TargetName)"></Copy>
+		<Delete Files="@(PackageRemoveFiles)" />
+		<ZipDirectory SourceDirectory="$(PackageFolder)" DestinationFile="$(PackageFolder)../$(TargetName).zip" Overwrite="true" />
+	</Target>
 	<ItemGroup>
 	  <Reference Update="System">
 	    <Private>False</Private>
 	  </Reference>
 	</ItemGroup>
-	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="@echo off&#xD;&#xA;set deployDir=&quot;$(WorkshopPath)&quot;&#xD;&#xA;&#xD;&#xA;if '$(SteamId)'=='' (echo SteamId in project not set.  Aborting Workshop Deployment &amp;&amp; exit)&#xD;&#xA;echo deploying to %25deployDir%25&#xD;&#xA;&#xD;&#xA;mkdir &quot;$(WorkshopPath)&quot;&#xD;&#xA;&#xD;&#xA;xcopy /f /y   &quot;$(TargetDir)$(TargetName).*&quot; %25deployDir%25" />
-	</Target>
 </Project>

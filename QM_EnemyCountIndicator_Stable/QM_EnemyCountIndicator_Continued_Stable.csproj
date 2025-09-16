@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>net48</TargetFramework>
     <OutputType>Library</OutputType>
@@ -6,7 +6,7 @@
   </PropertyGroup>
   <PropertyGroup>
 		<GAME_NAME>Quasimorph</GAME_NAME>
-		<SteamId>3494336727</SteamId>
+		<SteamId>3568856867</SteamId>
 	</PropertyGroup>
 	<PropertyGroup>
 		<GAME_PATH Condition="!Exists('$(GAME_PATH)')">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\Steam App $(GAME_STEAM_ID)', 'InstallLocation', null, RegistryView.Registry64, RegistryView.Registry32))</GAME_PATH>
@@ -14,11 +14,12 @@
 		<GAME_PATH Condition="!Exists('$(GAME_PATH)') AND '$(_SteamLibraryPath)' != ''">$(_SteamLibraryPath)\steamapps\common\$(GAME_NAME)</GAME_PATH>
 		<GAME_PATH Condition="!Exists('$(GAME_PATH)')">C:\Program Files\Steam\steamapps\common\$(GAME_NAME)</GAME_PATH>
 		<GAME_PATH Condition="!Exists('$(GAME_PATH)')">C:\Program Files (x86)\Steam\steamapps\common\$(GAME_NAME)</GAME_PATH>
-		<GAME_PATH Condition="!Exists('$(GAME_PATH)')">D:\Games\Steam\\steamapps\common\$(GAME_NAME)</GAME_PATH>
+		<GAME_PATH Condition="!Exists('$(GAME_PATH)')">D:\Games\Steam\steamapps\common\$(GAME_NAME)</GAME_PATH>
 	</PropertyGroup>
 	<PropertyGroup>
 		<WorkshopPath>$(GAME_PATH)\..\..\workshop\content\2059170\$(SteamId)\</WorkshopPath>
-		<ManagedPath>D:\Repositories\Quasimorph\_ManagedAssemblies\Beta\</ManagedPath>
+		<ManagedPath>$(GAME_PATH)\$(GAME_NAME)_Data\Managed\</ManagedPath>
+		<!--<ManagedPath>D:\Repositories\Quasimorph\_ManagedAssemblies\Stable\</ManagedPath>-->
 	</PropertyGroup>
 	<ItemGroup>
 	  <Compile Remove="Move To Root\**" />
@@ -28,11 +29,9 @@
 	<ItemGroup>
 	  <None Remove="config.ini" />
 	</ItemGroup>
-
 	<ItemGroup>
-		<Reference Include="Assembly-CSharp" publicize="true">
+		<Reference Include="Assembly-CSharp">
 			<HintPath>$(ManagedPath)Assembly-CSharp.dll</HintPath>
-			<Private>False</Private>
 		</Reference>
 		<Reference Include="MCM">
 		  <HintPath>..\..\..\..\Games\Steam\steamapps\workshop\content\2059170\3469678797\MCM.dll</HintPath>
@@ -94,7 +93,7 @@
 		<Delete Files="@(ArtifactFiles)" />
 	</Target>
 	<ItemGroup>
-	  <ProjectReference Include="..\src\QM_EnemyCountIndicator.csproj" />
+	  <ProjectReference Include="..\src\QM_EnemyCountIndicator_Continued.csproj" />
 	</ItemGroup>
 	<ItemGroup>
 	  <Reference Update="System">

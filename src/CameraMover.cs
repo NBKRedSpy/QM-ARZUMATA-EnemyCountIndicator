@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace QM_EnemyCountIndicator
+namespace QM_EnemyCountIndicator_Continued
 {
     internal class CameraMover
     {

@@ -7,7 +7,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
 
-namespace QM_EnemyCountIndicator
+namespace QM_EnemyCountIndicator_Continued
 {
     public class EnemyIndicator
     {
