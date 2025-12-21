@@ -228,45 +228,7 @@ namespace QM_EnemyCountIndicator_Continued
             }
         }
 
-        // Another way to do that, but UpdateVisibility is better as it's more generic.
-
-        // [HarmonyPatch(typeof(Creature), "ChangeDirection", new Type[] { typeof(CellPosition), typeof(bool), typeof(bool), typeof(bool) })]
-        // public static class Creature_ChangeDirection_CellPosition_Patch
-        // {
-        //     // Prefix method (if needed)
-        //     [HarmonyPrefix]
-        //     public static bool Prefix(ref MGSC.CellPosition dirPos, ref bool playAnim, ref bool updateLos, ref bool markActionFlag)
-        //     {
-        //         // Your prefix logic here
-        //             
-        //         return true;  // Return false to cancel the original method
-        //     }
-        // 
-        //     // Postfix method (with correct signature)
-        //     [HarmonyPostfix]
-        //     public static void Postfix(MGSC.Creature __instance, ref MGSC.CellPosition dirPos, bool playAnim, bool updateLos, bool markActionFlag, ref bool __result)
-        //     {
-        //         // Your post-execution logic here
-        //         // monsterCount = __instance._creatures.Player._visibleCreatures.Count;
-        //         monsterCount = 0;
-        //         foreach (Creature creature in __instance._creatures.Monsters)
-        //         {
-        //             var monster = (Monster)creature;
-        //             MapCell cell = monster._mapGrid.GetCell(monster.CreatureData.Position, false);
-        // 
-        //             //if (creature.IsSeenByPlayer)
-        //             if (cell.isSeen)
-        //             {
-        //                 monsterCount++;
-        //             }
-        //         }
-        //         // Ensure you have an 'out' parameter for the return value of the original method
-        //         __result = true;  // Or whatever logic is needed to determine the result
-        // 
-        //         Plugin.Logger.Log("ChangeDirection(CellPosition) completed with result: " + __result);
-        //     }
-        // }
-
+    
         private static void AdjustIndicatorBorderHue(Image image, Color sourceColor, Color targetColor)
         {
             if (image != null && image.sprite != null)
