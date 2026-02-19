@@ -6,7 +6,7 @@ namespace QM_EnemyCountIndicator_Continued_Stable
 {
     public class EnemyIndicator_Stable
     {
-        [HarmonyPatch(typeof(VisibilitySystem), "UpdateVisibility", new Type[] { typeof(ItemsOnFloor), typeof(Creatures), typeof(MapObstacles), typeof(MapRenderer), typeof(MapGrid), typeof(MapEntities), typeof(FireController), typeof(Visibilities) })]
+        [HarmonyPatch(typeof(VisibilitySystem), nameof(VisibilitySystem.UpdateVisibility), new Type[] { typeof(ItemsOnFloor), typeof(Creatures), typeof(MapObstacles), typeof(MapRenderer), typeof(MapGrid), typeof(MapEntities), typeof(FireController), typeof(Visibilities) })]
         public static class VisibilitySystem_UpdateVisibility_Patch
         {
             [HarmonyPostfix]

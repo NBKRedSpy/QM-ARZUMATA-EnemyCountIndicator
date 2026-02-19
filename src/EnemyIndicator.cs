@@ -44,7 +44,7 @@ namespace QM_EnemyCountIndicator_Continued
         private static float stepDuration = 1f / 35f;
 
         // That way we can determine current game language.
-        [HarmonyPatch(typeof(Localization), "ActualizeFontAndSize", new Type[] {
+        [HarmonyPatch(typeof(Localization), nameof(Localization.ActualizeFontAndSize), new Type[] {
             typeof(TextMeshProUGUI),
             typeof(Localization.Lang),
             typeof(TextContext),
@@ -241,7 +241,7 @@ namespace QM_EnemyCountIndicator_Continued
 
 
         // This one is needed too if enemy moves from view when you skip turn for example
-        [HarmonyPatch(typeof(CreatureSystem), "IsSeeMonsters", new Type[] { typeof(Creatures), typeof(MapGrid) })]
+        [HarmonyPatch(typeof(CreatureSystem), nameof(CreatureSystem.IsSeeMonsters), new Type[] { typeof(Creatures), typeof(MapGrid) })]
         internal class IsSeeMonsters_Patch
         {
             [HarmonyPostfix]

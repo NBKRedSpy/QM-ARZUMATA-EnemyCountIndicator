@@ -125,15 +125,6 @@ namespace QM_EnemyCountIndicator_Continued
         [Hook(ModHookType.AfterBootstrap)]
         public static void Bootstrap(IModContext context)
         {
-            //string versionString = GetVersion();
-            //bool beta = true;
-
-            //if (versionString.Equals("0.9.5"))
-            //{
-            //    // It's stable
-            //    beta = false;
-            //}
-
 
             string mainDllPath = Assembly.GetExecutingAssembly().Location;
             string mainDllDirectory = Path.GetDirectoryName(mainDllPath);
@@ -142,80 +133,9 @@ namespace QM_EnemyCountIndicator_Continued
 
             harmony.PatchAll();
 
-            //var stableDllPath = Path.Combine(mainDllDirectory, "QM_EnemyCountIndicator_Continued_Stable.dll");
-            //var betaDllPath = Path.Combine(mainDllDirectory, "QM_EnemyCountIndicator_Continued_Beta.dll");
-            //Console.WriteLine($"Exists Beta {File.Exists(betaDllPath)}");
-            //Console.WriteLine($"Exists Stable {File.Exists(stableDllPath)}");
-            //Console.WriteLine($"Beta?: {beta}");
-
-            //if (beta)
-            //{
-            //    Console.WriteLine($"Patching Beta");
-
-            //    Assembly assembly = Assembly.LoadFrom(betaDllPath);
-            //    harmony.PatchAll(assembly); // Apply patches from the loaded DLL
-            //}
-            //else
-            //{
-
-            //Console.WriteLine($"Patching Stable");
-
             Assembly assembly = Assembly.LoadFrom(Path.Combine(mainDllDirectory, "QM_EnemyCountIndicator_Continued_Stable.dll"));
             harmony.PatchAll(assembly); // Apply patches from the loaded DLL
         }
-
-        //private static string GetVersion()
-        //{
-        //    string buildVersion = Data.Global.BuildVersion; // e.g. "0.9.5.1.414s.d1e59aa"
-        //    string[] parts = buildVersion.Split('.');
-        //    var numericParts = parts
-        //            .Where(part => part.All(char.IsDigit)) // Only fully numeric parts
-        //            .Select(int.Parse)
-        //            .ToArray();
-
-        //    string cleanedVersionString = string.Empty;
-
-        //    Console.WriteLine($"Original version parts: [{string.Join(", ", parts)}]");
-        //    Console.WriteLine($"Numeric parts: [{string.Join(", ", numericParts)}]");
-
-        //    Version version = null;
-
-        //    try
-        //    {
-        //        switch (numericParts.Length)
-        //        {
-        //            case 1:
-        //                version = new Version(numericParts[0], 0);
-        //                break;
-        //            case 2:
-        //                version = new Version(numericParts[0], numericParts[1]);
-        //                break;
-        //            case 3:
-        //                version = new Version(numericParts[0], numericParts[1], numericParts[2]);
-        //                break;
-        //            default:
-        //                version = new Version(numericParts[0], numericParts[1], numericParts[2], numericParts[3]);
-        //                break;
-        //        }
-
-        //        cleanedVersionString = string.Join(".", numericParts);
-        //        Console.WriteLine($"Parsed Version: {version}");
-        //        Console.WriteLine($"Cleaned version string: {cleanedVersionString}");
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine($"Failed to create Version object: {ex.Message}");
-        //    }
-
-        //    return cleanedVersionString;
-
-        //}
-
-        //[Hook(ModHookType.AfterBootstrap)]
-        //public static void Bootstrap(IModContext context)
-        //{
-        //    new Harmony("ARZUMATA_" + ConfigDirectories.ModAssemblyName).PatchAll();
-        //}
 
         // MCM Related Start
         private static bool RegisterToMCM()
